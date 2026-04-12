@@ -5,7 +5,7 @@ if [ -z "$ETHERSCAN_API_KEY" ]; then
   exit 1
 fi
 
-echo "Verifying WadTest Token..."
+echo "Verifying Wadoozie Token..."
 npx hardhat verify --network sepolia \
   --contract contracts/Wadoozie.sol:Wadoozie \
   0xc8A46F5ff702e496de6E14E138488dfc33FF6761 \

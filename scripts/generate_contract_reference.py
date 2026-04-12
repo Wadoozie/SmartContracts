@@ -94,7 +94,7 @@ doc.add_heading("The Three Contracts", level=2)
 add_table(
     ["Contract", "Role"],
     [
-        ["Wadoozie (WADT)", "The governance token. Holding it gives you voting power (after delegation)."],
+        ["Wadoozie (WADZ)", "The governance token. Holding it gives you voting power (after delegation)."],
         ["HeadQuarters (Governor)", "The governance hub. Proposals are created, voted on, queued, and executed here."],
         ["WadoozieTimelock (Treasury)", "The time-delayed treasury. Approved proposals wait here before execution, giving the community a window to react."],
     ],
@@ -104,7 +104,7 @@ add_table(
 # 2. WADOOZIE TOKEN
 # ═══════════════════════════════════════════════════════════════════════════
 
-doc.add_heading("2. Wadoozie Token (WADT)", level=1)
+doc.add_heading("2. Wadoozie Token (WADZ)", level=1)
 
 doc.add_paragraph(
     "Wadoozie is a standard ERC-20 token with a fixed supply of 1 billion "
@@ -127,8 +127,8 @@ doc.add_heading("Read Methods (free, no gas)", level=2)
 add_table(
     ["Method", "Returns", "What It Does"],
     [
-        ["name()", "string", "Returns the token name (\"WadTest\" on testnet, \"Wadoozie\" on mainnet)."],
-        ["symbol()", "string", "Returns the token symbol (\"WADT\" on testnet, \"WADZ\" on mainnet)."],
+        ["name()", "string", "Returns the token name (\"Wadoozie\" on testnet, \"Wadoozie\" on mainnet)."],
+        ["symbol()", "string", "Returns the token symbol (\"WADZ\" on testnet, \"WADZ\" on mainnet)."],
         ["decimals()", "uint8", "Returns 18 (standard ERC-20 precision)."],
         ["totalSupply()", "uint256", "Returns the total token supply (1,000,000,000 * 10^18)."],
         ["TOTAL_SUPPLY()", "uint256", "Same as totalSupply — a public constant for convenience."],
@@ -161,7 +161,7 @@ add_table(
 doc.add_heading("Key Concept: Delegation", level=2)
 
 doc.add_paragraph(
-    "Holding WADT tokens alone does NOT give you voting power. You must "
+    "Holding WADZ tokens alone does NOT give you voting power. You must "
     "delegate your tokens — either to yourself or to someone else — before "
     "they count as votes. If you want to vote yourself, call "
     "delegate(yourOwnAddress). Delegation is a one-time action per address; "
@@ -191,7 +191,7 @@ add_table(
         ["_timelock", "address", "Address of the deployed WadoozieTimelock.", "(deployed address)"],
         ["_votingDelay", "uint48", "Number of blocks between proposal creation and voting start.", "7,200 (~1 day)"],
         ["_votingPeriod", "uint32", "Number of blocks the voting window stays open.", "50,400 (~1 week)"],
-        ["_proposalThreshold", "uint256", "Minimum delegated voting power required to create a proposal (in token units with 18 decimals).", "1,000 WADT"],
+        ["_proposalThreshold", "uint256", "Minimum delegated voting power required to create a proposal (in token units with 18 decimals).", "1,000 WADZ"],
         ["_quorumPercent", "uint256", "Percentage of total supply that must vote for a proposal to be valid.", "4 (= 4%)"],
         ["_guardian", "address", "Emergency address that can cancel any active proposal. Must be non-zero at deploy. Use a multisig.", "(multisig address)"],
     ],

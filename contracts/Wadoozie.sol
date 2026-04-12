@@ -9,12 +9,11 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 /// @title Wadoozie — The governance token
 /// @notice ERC20 with fixed 1B supply, ERC20Permit for gasless approvals, and ERC20Votes for governance.
 ///         No mint, no burn, no pause, no owner — fully immutable after deployment.
-/// @dev    TESTNET: Token name is "WadTest" / symbol "WADT".
-///         MAINNET: Change constructor args to ERC20("Wadoozie", "WADZ") and ERC20Permit("Wadoozie").
+/// @dev    Immutable after deployment. Token name and symbol are set in the constructor.
 contract Wadoozie is ERC20, ERC20Permit, ERC20Votes {
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 ether;
 
-    constructor(address initialHolder) ERC20("WadTest", "WADT") ERC20Permit("WadTest") {
+    constructor(address initialHolder) ERC20("Wadoozie", "WADZ") ERC20Permit("Wadoozie") {
         _mint(initialHolder, TOTAL_SUPPLY);
     }
 

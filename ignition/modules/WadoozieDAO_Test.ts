@@ -4,7 +4,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 // Perfect for rapid testing of the full governance flow
 const VOTING_DELAY = 1n;        // 1 block (~12 seconds on Sepolia)
 const VOTING_PERIOD = 75n;      // 75 blocks (~15 minutes at 12 sec/block)
-const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADT required to propose
+const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADZ required to propose
 const QUORUM_PERCENT = 4n;       // 4% of total supply
 const TIMELOCK_DELAY = 600;      // 10 minutes in seconds
 

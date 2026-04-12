@@ -3,7 +3,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 // ── Recommended production parameters ──────────────────────────────────
 const VOTING_DELAY = 7200n; // ~1 day in blocks
 const VOTING_PERIOD = 50400n; // ~1 week in blocks
-const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADT required to propose
+const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADZ required to propose
 const QUORUM_PERCENT = 4n; // 4% of total supply
 const TIMELOCK_DELAY = 86400; // 1 day in seconds
 

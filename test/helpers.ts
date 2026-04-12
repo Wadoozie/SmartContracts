@@ -4,8 +4,8 @@ import path from "path";
 
 // ── Test DAO parameters (small values for fast tests) ──────────────────
 export const TEST_PARAMS = {
-  TOKEN_NAME: "WadTest",
-  TOKEN_SYMBOL: "WADT",
+  TOKEN_NAME: "Wadoozie",
+  TOKEN_SYMBOL: "WADZ",
   TOTAL_SUPPLY: 1_000_000_000n * 10n ** 18n, // 1B tokens
   VOTING_DELAY: 10n, // blocks
   VOTING_PERIOD: 50n, // blocks

@@ -86,7 +86,7 @@ describe("WadoozieToken", () => {
 
       const tokenAddress = await token.getAddress();
       const domain = {
-        name: "WadTest",
+        name: TEST_PARAMS.TOKEN_NAME,
         version: "1",
         chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: tokenAddress,
@@ -135,7 +135,7 @@ describe("WadoozieToken", () => {
 
       const tokenAddress = await token.getAddress();
       const domain = {
-        name: "WadTest",
+        name: TEST_PARAMS.TOKEN_NAME,
         version: "1",
         chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: tokenAddress,
@@ -182,7 +182,7 @@ describe("WadoozieToken", () => {
 
       const tokenAddress = await token.getAddress();
       const domain = {
-        name: "WadTest",
+        name: TEST_PARAMS.TOKEN_NAME,
         version: "1",
         chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: tokenAddress,

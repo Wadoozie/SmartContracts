@@ -35,13 +35,13 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 
 ## Token Specification
 
-| Property | Testnet | Mainnet |
-|---|---|---|
-| **Name** | WadTest | Wadoozie |
-| **Symbol** | WADT | WADZ |
-| **Total Supply** | 1,000,000,000 | 1,000,000,000 |
-| **Decimals** | 18 | 18 |
-| **Standard** | ERC-20 | ERC-20 |
+| Property | Value |
+|---|---|
+| **Name** | Wadoozie |
+| **Symbol** | WADZ |
+| **Total Supply** | 1,000,000,000 |
+| **Decimals** | 18 |
+| **Standard** | ERC-20 |
 
 **Extensions:**
 
@@ -265,31 +265,16 @@ Runs `scripts/deploy-test.ts` which deploys all three contracts, configures role
 
 Before deploying to mainnet:
 
-1. **Update token branding** in `contracts/Wadoozie.sol`:
-   ```solidity
-   // Change from:
-   constructor(address initialHolder) ERC20("WadTest", "WADT") ERC20Permit("WadTest")
-
-   // Change to:
-   constructor(address initialHolder) ERC20("Wadoozie", "WADZ") ERC20Permit("Wadoozie")
-   ```
-
-2. **Update test helpers** in `test/helpers.ts`:
-   ```typescript
-   TOKEN_NAME: "Wadoozie",
-   TOKEN_SYMBOL: "WADZ",
-   ```
-
-3. **Run all tests** and confirm 60/60 pass:
+1. **Run all tests** and confirm 60/60 pass:
    ```bash
    npm test
    ```
 
-4. **Set `initialHolder`** to the address that should receive the full supply (use a multisig).
+2. **Set `initialHolder`** to the address that should receive the full supply (use a multisig).
 
-5. **Set `guardian`** to a multisig address (never a single EOA).
+3. **Set `guardian`** to a multisig address (never a single EOA).
 
-6. **Add mainnet network** to `hardhat.config.ts`:
+4. **Add mainnet network** to `hardhat.config.ts`:
    ```typescript
    mainnet: {
      type: "http" as const,
@@ -298,19 +283,19 @@ Before deploying to mainnet:
    },
    ```
 
-7. **Deploy:**
+5. **Deploy:**
    ```bash
    npx hardhat ignition deploy ignition/modules/WadoozieDAO.ts --network mainnet
    ```
 
-8. **Verify contracts** on Etherscan (see below).
+6. **Verify contracts** on Etherscan (see below).
 
-9. **Confirm roles** on Etherscan:
+7. **Confirm roles** on Etherscan:
    - Timelock `hasRole(PROPOSER_ROLE, governorAddress)` returns `true`
    - Timelock `hasRole(CANCELLER_ROLE, governorAddress)` returns `true`
    - Timelock `hasRole(DEFAULT_ADMIN_ROLE, deployerAddress)` returns `false`
 
-10. **Delegate tokens** — the `initialHolder` must call `delegate(ownAddress)` to activate voting power before any proposals can pass quorum.
+8. **Delegate tokens** — the `initialHolder` must call `delegate(ownAddress)` to activate voting power before any proposals can pass quorum.
 
 ---
 

@@ -58,7 +58,7 @@ async function main() {
 
   console.log("\n✅ All roles configured!");
   console.log("\n📋 Deployed Contracts:");
-  console.log("  WadTest Token:    0xc8A46F5ff702e496de6E14E138488dfc33FF6761");
+  console.log("  Wadoozie Token:   0xc8A46F5ff702e496de6E14E138488dfc33FF6761");
   console.log("  HeadQuarters:     0x9A5c6aF405CF6830356d08Ad3a3BA73A7A9b4918");
   console.log("  Timelock:         0x5800bf5aE75549A3FcF050BF7e46aC859917325e");
 }

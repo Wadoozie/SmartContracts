@@ -11,7 +11,7 @@ async function main() {
   // Test parameters
   const VOTING_DELAY = 1n;        // 1 block (~12 seconds)
   const VOTING_PERIOD = 75n;      // 75 blocks (~15 minutes)
-  const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADT
+  const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADZ
   const QUORUM_PERCENT = 4n;      // 4% of supply
   const TIMELOCK_DELAY = 600;     // 10 minutes
 
