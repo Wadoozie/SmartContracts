@@ -16,7 +16,7 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 - [Compile](#compile)
 - [Testing](#testing)
 - [Deployment](#deployment)
-- [Mainnet Checklist](#mainnet-checklist)
+- [Deployment Checklist](#deployment-checklist)
 - [Contract Verification](#contract-verification)
 - [Security](#security)
 - [License](#license)
@@ -157,7 +157,7 @@ The Timelock holds all DAO funds and is the contract that executes on-chain acti
 
 ```env
 DEPLOYER_PRIVATE_KEY=your_private_key_here
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
+ETHEREUM_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY
 ETHERSCAN_API_KEY=your_etherscan_api_key
 ```
 
@@ -216,6 +216,14 @@ Contracts must be deployed in this order due to constructor dependencies:
 
 The Ignition modules handle all six steps automatically.
 
+### Ethereum Mainnet
+
+```bash
+npm run deploy:mainnet
+```
+
+Deploys all three contracts with production parameters, grants roles, and renounces admin — fully automated via Hardhat Ignition.
+
 ### Local Network
 
 ```bash
@@ -224,9 +232,6 @@ npx hardhat node
 
 # Terminal 2 — deploy with production parameters
 npm run deploy:local
-
-# Or deploy with fast test parameters
-npm run deploy:local:test
 ```
 
 ### Sepolia Testnet
@@ -235,17 +240,9 @@ npm run deploy:local:test
 # Production parameters
 npm run deploy:sepolia
 
-# Fast test parameters (recommended for first deploy)
+# Fast test parameters
 npm run deploy:sepolia:test
 ```
-
-### Standalone Script (Alternative)
-
-```bash
-npm run deploy:script
-```
-
-Runs `scripts/deploy-test.ts` which deploys all three contracts, configures roles, and prints a summary with addresses.
 
 ### Available npm Scripts
 
@@ -253,39 +250,32 @@ Runs `scripts/deploy-test.ts` which deploys all three contracts, configures role
 |---|---|
 | `npm run compile` | Compile all contracts |
 | `npm test` | Run the full test suite |
+| `npm run deploy:mainnet` | Ignition deploy to Ethereum mainnet |
 | `npm run deploy:local` | Ignition deploy to localhost (production params) |
 | `npm run deploy:local:test` | Ignition deploy to localhost (test params) |
 | `npm run deploy:sepolia` | Ignition deploy to Sepolia (production params) |
 | `npm run deploy:sepolia:test` | Ignition deploy to Sepolia (test params) |
-| `npm run deploy:script` | Standalone deploy script to Sepolia |
 
 ---
 
-## Mainnet Checklist
+## Deployment Checklist
 
-Before deploying to mainnet:
+Before deploying to Ethereum mainnet:
 
 1. **Run all tests** and confirm 60/60 pass:
    ```bash
    npm test
    ```
 
-2. **Set `initialHolder`** to the address that should receive the full supply (use a multisig).
+2. **Configure `.env`** with mainnet RPC URL, deployer private key, and Etherscan API key.
 
-3. **Set `guardian`** to a multisig address (never a single EOA).
+3. **Set `initialHolder`** to the address that should receive the full 1B WADZ supply (use a multisig).
 
-4. **Add mainnet network** to `hardhat.config.ts`:
-   ```typescript
-   mainnet: {
-     type: "http" as const,
-     url: process.env.ETHEREUM_RPC_URL || "",
-     accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-   },
-   ```
+4. **Set `guardian`** to a multisig address (never a single EOA).
 
 5. **Deploy:**
    ```bash
-   npx hardhat ignition deploy ignition/modules/WadoozieDAO.ts --network mainnet
+   npm run deploy:mainnet
    ```
 
 6. **Verify contracts** on Etherscan (see below).
@@ -305,14 +295,14 @@ After deployment, verify source code on Etherscan:
 
 ```bash
 # Token
-npx hardhat verify --network <network> <TOKEN_ADDRESS> "<INITIAL_HOLDER_ADDRESS>"
+npx hardhat verify --network mainnet <TOKEN_ADDRESS> "<INITIAL_HOLDER_ADDRESS>"
 
 # Timelock
-npx hardhat verify --network <network> <TIMELOCK_ADDRESS> \
+npx hardhat verify --network mainnet <TIMELOCK_ADDRESS> \
   86400 "[]" '["0x0000000000000000000000000000000000000000"]' "<DEPLOYER_ADDRESS>"
 
 # Governor
-npx hardhat verify --network <network> <GOVERNOR_ADDRESS> \
+npx hardhat verify --network mainnet <GOVERNOR_ADDRESS> \
   "<TOKEN_ADDRESS>" "<TIMELOCK_ADDRESS>" 7200 50400 "1000000000000000000000" 4 "<GUARDIAN_ADDRESS>"
 ```
 

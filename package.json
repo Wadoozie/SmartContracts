@@ -8,9 +8,9 @@
     "test": "hardhat test",
     "deploy:local": "hardhat ignition deploy ignition/modules/WadoozieDAO.ts --network localhost",
     "deploy:local:test": "hardhat ignition deploy ignition/modules/WadoozieDAO_Test.ts --network localhost",
+    "deploy:mainnet": "hardhat ignition deploy ignition/modules/WadoozieDAO.ts --network mainnet",
     "deploy:sepolia": "hardhat ignition deploy ignition/modules/WadoozieDAO.ts --network sepolia",
-    "deploy:sepolia:test": "hardhat ignition deploy ignition/modules/WadoozieDAO_Test.ts --network sepolia",
-    "deploy:script": "hardhat run scripts/deploy-test.ts --network sepolia"
+    "deploy:sepolia:test": "hardhat ignition deploy ignition/modules/WadoozieDAO_Test.ts --network sepolia"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.0",

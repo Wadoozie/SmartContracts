@@ -20,6 +20,13 @@ export default defineConfig({
     },
   },
   networks: {
+    ...(process.env.ETHEREUM_RPC_URL ? {
+      mainnet: {
+        type: "http" as const,
+        url: process.env.ETHEREUM_RPC_URL,
+        accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      },
+    } : {}),
     sepolia: {
       type: "http" as const,
       url: process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
