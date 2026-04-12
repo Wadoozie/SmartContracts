@@ -37,8 +37,8 @@ async function main() {
   console.log("✅ Timelock deployed to:", timelockAddress);
 
   // 3. Deploy Governor
-  console.log("\n🏛️  Deploying HeadQuarters (Governor)...");
-  const Governor = await ethers.getContractFactory("HeadQuarters");
+  console.log("\n🏛️  Deploying Headquarters (Governor)...");
+  const Governor = await ethers.getContractFactory("Headquarters");
   const governor = await Governor.deploy(
     tokenAddress,
     timelockAddress,
@@ -76,7 +76,7 @@ async function main() {
   console.log("\n📋 Contract Addresses:");
   console.log("   Wadoozie (Token):        ", tokenAddress);
   console.log("   WadoozieTimelock:        ", timelockAddress);
-  console.log("   HeadQuarters (Governor): ", governorAddress);
+  console.log("   Headquarters (Governor): ", governorAddress);
   console.log("\n⚡ Test Parameters:");
   console.log("   Voting Delay:    1 block (~12 seconds)");
   console.log("   Voting Period:   75 blocks (~15 minutes)");

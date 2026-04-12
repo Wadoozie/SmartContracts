@@ -40,8 +40,8 @@ async function main() {
   console.log("✅ Timelock:", timelockAddress);
 
   // 3. Deploy Governor
-  console.log("\n🏛️  Deploying HeadQuarters...");
-  const Governor = await ethers.getContractFactory("HeadQuarters");
+  console.log("\n🏛️  Deploying Headquarters...");
+  const Governor = await ethers.getContractFactory("Headquarters");
   const governor = await Governor.deploy(
     tokenAddress,
     timelockAddress,

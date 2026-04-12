@@ -12,7 +12,7 @@ import {
 const connection = await network.connect();
 const { ethers, networkHelpers } = connection;
 
-describe("HeadQuarters", () => {
+describe("Headquarters", () => {
   // ── Configuration ────────────────────────────────────────────────────
   describe("Configuration", () => {
     it("should have correct voting delay", async () => {

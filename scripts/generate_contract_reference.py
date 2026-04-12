@@ -95,7 +95,7 @@ add_table(
     ["Contract", "Role"],
     [
         ["Wadoozie (WADZ)", "The governance token. Holding it gives you voting power (after delegation)."],
-        ["HeadQuarters (Governor)", "The governance hub. Proposals are created, voted on, queued, and executed here."],
+        ["Headquarters (Governor)", "The governance hub. Proposals are created, voted on, queued, and executed here."],
         ["WadoozieTimelock (Treasury)", "The time-delayed treasury. Approved proposals wait here before execution, giving the community a window to react."],
     ],
 )
@@ -172,10 +172,10 @@ doc.add_paragraph(
 # 3. HEADQUARTERS (GOVERNOR)
 # ═══════════════════════════════════════════════════════════════════════════
 
-doc.add_heading("3. HeadQuarters (Governor)", level=1)
+doc.add_heading("3. Headquarters (Governor)", level=1)
 
 doc.add_paragraph(
-    "HeadQuarters is the governance contract — the decision-making engine of "
+    "Headquarters is the governance contract — the decision-making engine of "
     "the DAO. Anyone with enough delegated voting power can create a "
     "proposal. Token holders vote For, Against, or Abstain. If a proposal "
     "passes and reaches quorum, it is queued in the Timelock and executed "
@@ -219,7 +219,7 @@ doc.add_heading("Read Methods (free, no gas)", level=2)
 add_table(
     ["Method", "Returns", "What It Does"],
     [
-        ["name()", "string", "Returns \"HeadQuarters\"."],
+        ["name()", "string", "Returns \"Headquarters\"."],
         ["version()", "string", "Returns the Governor contract version."],
         ["token()", "address", "Returns the address of the governance token."],
         ["timelock()", "address", "Returns the address of the Timelock."],
@@ -365,9 +365,9 @@ add_table(
     ["Role", "Who Has It", "What It Can Do"],
     [
         ["DEFAULT_ADMIN_ROLE", "Nobody (renounced after setup)", "Grant and revoke all other roles. Renounced to make the DAO self-governing."],
-        ["PROPOSER_ROLE", "HeadQuarters (Governor)", "Queue approved proposals for execution."],
+        ["PROPOSER_ROLE", "Headquarters (Governor)", "Queue approved proposals for execution."],
         ["EXECUTOR_ROLE", "address(0) — anyone", "Execute queued proposals once the delay has passed. Open to anyone by default."],
-        ["CANCELLER_ROLE", "HeadQuarters (Governor)", "Cancel queued proposals that haven't been executed yet."],
+        ["CANCELLER_ROLE", "Headquarters (Governor)", "Cancel queued proposals that haven't been executed yet."],
     ],
 )
 
@@ -396,7 +396,7 @@ steps = [
         "  - admin = deployer address (temporary)"
     ),
     (
-        "Deploy HeadQuarters",
+        "Deploy Headquarters",
         "Deploy with the token address, timelock address, and governance "
         "parameters (voting delay, voting period, proposal threshold, quorum "
         "percent, guardian address)."

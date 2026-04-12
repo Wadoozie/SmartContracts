@@ -28,7 +28,7 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 | Contract | File | Purpose |
 |---|---|---|
 | **Wadoozie** | `contracts/Wadoozie.sol` | ERC-20 governance token with fixed supply, delegation, and gasless approvals |
-| **HeadQuarters** | `contracts/HeadQuarters.sol` | OpenZeppelin Governor — proposal creation, voting, queueing, execution |
+| **Headquarters** | `contracts/Headquarters.sol` | OpenZeppelin Governor — proposal creation, voting, queueing, execution |
 | **WadoozieTimelock** | `contracts/WadoozieTimelock.sol` | TimelockController wrapper — treasury, execution delay, role-based access |
 
 ---
@@ -88,7 +88,7 @@ All governance parameters are modifiable through governance proposals via `Gover
 
 ## Proposal Guardian
 
-HeadQuarters includes the `GovernorProposalGuardian` extension — an emergency address that can cancel any non-executed proposal.
+Headquarters includes the `GovernorProposalGuardian` extension — an emergency address that can cancel any non-executed proposal.
 
 | Property | Detail |
 |---|---|
@@ -127,8 +127,8 @@ After deployment and role configuration, the Timelock access control is:
 
 | Role | Assigned To | Purpose |
 |---|---|---|
-| `PROPOSER_ROLE` | HeadQuarters (Governor) | Queue approved proposals |
-| `CANCELLER_ROLE` | HeadQuarters (Governor) | Cancel queued proposals |
+| `PROPOSER_ROLE` | Headquarters (Governor) | Queue approved proposals |
+| `CANCELLER_ROLE` | Headquarters (Governor) | Cancel queued proposals |
 | `EXECUTOR_ROLE` | `address(0)` (anyone) | Execute proposals after delay |
 | `DEFAULT_ADMIN_ROLE` | Renounced (nobody) | No human can grant or revoke roles |
 
@@ -194,7 +194,7 @@ npm test
 | Suite | File | Coverage |
 |---|---|---|
 | **WadoozieToken** | `test/Wadoozie.test.ts` | Deployment, transfers, permit, votes, immutability |
-| **HeadQuarters** | `test/HeadQuarters.test.ts` | Configuration, proposal creation, voting, proposal guardian, proposal states |
+| **Headquarters** | `test/Headquarters.test.ts` | Configuration, proposal creation, voting, proposal guardian, proposal states |
 | **GovernanceLifecycle** | `test/GovernanceLifecycle.test.ts` | Full propose-vote-queue-execute flow, timelock enforcement, cancellation, access control, ETH handling, self-modification |
 
 ---
@@ -208,9 +208,9 @@ Contracts must be deployed in this order due to constructor dependencies:
 ```
 1. Wadoozie Token
 2. WadoozieTimelock
-3. HeadQuarters (requires token + timelock addresses)
-4. Grant PROPOSER_ROLE to HeadQuarters on Timelock
-5. Grant CANCELLER_ROLE to HeadQuarters on Timelock
+3. Headquarters (requires token + timelock addresses)
+4. Grant PROPOSER_ROLE to Headquarters on Timelock
+5. Grant CANCELLER_ROLE to Headquarters on Timelock
 6. Renounce DEFAULT_ADMIN_ROLE on Timelock
 ```
 
@@ -344,7 +344,7 @@ Wadoozie
 ├── ERC20Permit
 └── ERC20Votes
 
-HeadQuarters
+Headquarters
 ├── Governor
 ├── GovernorSettings
 ├── GovernorCountingSimple

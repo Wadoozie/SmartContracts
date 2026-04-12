@@ -11,17 +11,17 @@ import {GovernorProposalGuardian} from "@openzeppelin/contracts/governance/exten
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
-/// @title HeadQuarters — Where the mission is decided
-/// @notice This is HeadQuarters. You vote here. You decide what happens next.
+/// @title Headquarters — Where the mission is decided
+/// @notice This is Headquarters. You vote here. You decide what happens next.
 ///         Every proposal is a new direction. Every vote shapes the journey.
 ///         You're not just voting — you're steering the whole thing.
-///         HeadQuarters is always moving. HeadQuarters is wherever we need it to be.
+///         Headquarters is always moving. Headquarters is wherever we need it to be.
 /// @dev    The proposal guardian can cancel any non-terminal proposal as an emergency brake.
 ///         The guardian can only be changed or removed via a governance proposal
 ///         (setProposalGuardian is onlyGovernance). If the guardian is compromised,
 ///         it can cancel the very proposal that tries to replace it — creating a deadlock.
 ///         Mitigation: use a multisig as guardian, not a single EOA.
-contract HeadQuarters is
+contract Headquarters is
     Governor,
     GovernorSettings,
     GovernorCountingSimple,
@@ -32,7 +32,7 @@ contract HeadQuarters is
 {
     /// @dev Thrown when the guardian address is zero at construction.
     ///      Use setProposalGuardian(address(0)) via governance to remove the guardian later.
-    error HeadQuartersInvalidGuardian();
+    error HeadquartersInvalidGuardian();
 
     /// @param _token         ERC20Votes governance token
     /// @param _timelock      TimelockController used for proposal execution delay
@@ -50,13 +50,13 @@ contract HeadQuarters is
         uint256 _quorumPercent,
         address _guardian
     )
-        Governor("HeadQuarters")
+        Governor("Headquarters")
         GovernorSettings(_votingDelay, _votingPeriod, _proposalThreshold)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(_quorumPercent)
         GovernorTimelockControl(_timelock)
     {
-        if (_guardian == address(0)) revert HeadQuartersInvalidGuardian();
+        if (_guardian == address(0)) revert HeadquartersInvalidGuardian();
         _setProposalGuardian(_guardian);
     }
 

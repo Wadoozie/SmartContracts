@@ -36,7 +36,7 @@ async function main() {
 
   // 3. Deploy Governor
   console.log("Deploying Governor...");
-  const governor = await ethers.deployContract("HeadQuarters", [
+  const governor = await ethers.deployContract("Headquarters", [
     tokenAddr,
     timelockAddr,
     VOTING_DELAY,

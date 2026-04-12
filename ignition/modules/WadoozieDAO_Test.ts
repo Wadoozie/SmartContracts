@@ -28,8 +28,8 @@ const WadoozieDAOTestModule = buildModule("WadoozieDAOTestModule", (m) => {
     deployer,
   ]);
 
-  // 3. Deploy HeadQuarters (Governor)
-  const governor = m.contract("HeadQuarters", [
+  // 3. Deploy Headquarters (Governor)
+  const governor = m.contract("Headquarters", [
     token,
     timelock,
     VOTING_DELAY,

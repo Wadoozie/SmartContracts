@@ -82,8 +82,8 @@ export async function deployDAOFixture(connection: any) {
     deployer.address, // admin — temporary
   );
 
-  // 3. Deploy HeadQuarters
-  const governor = await ethers.deployContract("HeadQuarters", [
+  // 3. Deploy Headquarters
+  const governor = await ethers.deployContract("Headquarters", [
     await token.getAddress(),
     await timelock.getAddress(),
     TEST_PARAMS.VOTING_DELAY,
