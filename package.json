@@ -1,0 +1,39 @@
+{
+  "name": "wadoozie-dao",
+  "version": "1.0.0",
+  "description": "Wadoozie DAO — The Mission Nobody Understands",
+  "type": "module",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat ignition deploy ignition/modules/WadoozieDAO.ts --network localhost",
+    "deploy:local:test": "hardhat ignition deploy ignition/modules/WadoozieDAO_Test.ts --network localhost",
+    "deploy:sepolia": "hardhat ignition deploy ignition/modules/WadoozieDAO.ts --network sepolia",
+    "deploy:sepolia:test": "hardhat ignition deploy ignition/modules/WadoozieDAO_Test.ts --network sepolia",
+    "deploy:script": "hardhat run scripts/deploy-test.ts --network sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.0",
+    "@nomicfoundation/hardhat-ethers-chai-matchers": "^3.0.4",
+    "@nomicfoundation/hardhat-ignition": "^3.0.0",
+    "@nomicfoundation/hardhat-ignition-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-keystore": "^3.0.5",
+    "@nomicfoundation/hardhat-mocha": "^3.0.15",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.0",
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-typechain": "^3.0.5",
+    "@nomicfoundation/hardhat-verify": "^3.0.13",
+    "@openzeppelin/contracts": "^5.6.1",
+    "@types/chai": "^5.0.0",
+    "@types/chai-as-promised": "^8.0.0",
+    "@types/mocha": ">=10.0.0",
+    "@types/node": "^22.0.0",
+    "chai": "^6.0.0",
+    "dotenv": "^17.4.0",
+    "ethers": "^6.14.0",
+    "hardhat": "^3.0.0",
+    "mocha": "^11.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {}
+}

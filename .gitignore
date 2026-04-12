@@ -1,0 +1,58 @@
+# ── Dependencies ──────────────────────────────────────────────────────────
+node_modules/
+
+# ── Hardhat ──────────────────────────────────────────────────────────────
+artifacts/
+cache/
+coverage/
+typechain-types/
+types/
+
+# ── Hardhat Ignition ─────────────────────────────────────────────────────
+ignition/deployments/
+
+# ── Environment / Secrets ────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ── Frontend (not part of this smart-contract repo) ──────────────────────
+dao-frontend-demo/
+
+# ── Generated documents ──────────────────────────────────────────────────
+*.docx
+*.pdf
+
+# ── IDE / Editor ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Testing / Coverage ──────────────────────────────────────────────────
+coverage.json
+.coverage_contracts/
+.coverage_artifacts/
+.coverage_cache/
+
+# ── Build / TypeScript ───────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Yarn ─────────────────────────────────────────────────────────────────
+.pnp.*
+.yarn/
+
+# ── Claude Code ──────────────────────────────────────────────────────────
+.claude/
