@@ -56,6 +56,14 @@ describe("Headquarters", () => {
         await networkHelpers.loadFixture(deployDAOFixture);
       expect(await governor.token()).to.equal(await token.getAddress());
     });
+
+    it("should have correct late quorum vote extension", async () => {
+      const { governor } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await governor.lateQuorumVoteExtension()).to.equal(
+        TEST_PARAMS.VOTE_EXTENSION,
+      );
+    });
   });
 
   // ── Proposal Creation ───────────────────────────────────────────────
@@ -396,6 +404,73 @@ describe("Headquarters", () => {
       await expect(
         governor.execute(targets, values, calldatas, descriptionHash),
       ).to.be.revertedWithCustomError(governor, "HeadquartersTimelockImmutable");
+    });
+  });
+
+  // ── Late Quorum Protection ─────────────────────────────────────────
+  describe("Late Quorum Protection", () => {
+    it("should extend deadline when quorum is reached near end of voting", async () => {
+      const { governor, token, initialHolder, voter1 } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+
+      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
+
+      const { proposalId } = await propose(
+        governor,
+        initialHolder,
+        [voter1.address],
+        [0n],
+        ["0x"],
+        "Late quorum test",
+      );
+
+      // Mine to near the end of voting period (leave 2 blocks before deadline)
+      const votingDelay = Number(TEST_PARAMS.VOTING_DELAY);
+      const votingPeriod = Number(TEST_PARAMS.VOTING_PERIOD);
+      await networkHelpers.mine(votingDelay + votingPeriod - 2);
+
+      // Record the original deadline
+      const originalDeadline = await governor.proposalDeadline(proposalId);
+
+      // Cast a vote that reaches quorum near the end
+      await governor
+        .connect(initialHolder)
+        .castVote(proposalId, VoteType.For);
+
+      // Deadline should be extended
+      const newDeadline = await governor.proposalDeadline(proposalId);
+      expect(newDeadline).to.be.gt(originalDeadline);
+    });
+
+    it("should not extend deadline when quorum is reached early", async () => {
+      const { governor, token, initialHolder, voter1 } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+
+      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
+
+      const { proposalId } = await propose(
+        governor,
+        initialHolder,
+        [voter1.address],
+        [0n],
+        ["0x"],
+        "Early quorum test",
+      );
+
+      // Mine just past voting delay (early in voting period)
+      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
+
+      // Record the original deadline
+      const originalDeadline = await governor.proposalDeadline(proposalId);
+
+      // Cast a vote that reaches quorum early
+      await governor
+        .connect(initialHolder)
+        .castVote(proposalId, VoteType.For);
+
+      // Deadline should remain unchanged
+      const newDeadline = await governor.proposalDeadline(proposalId);
+      expect(newDeadline).to.equal(originalDeadline);
     });
   });
 

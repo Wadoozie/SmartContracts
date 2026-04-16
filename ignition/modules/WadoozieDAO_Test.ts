@@ -6,6 +6,7 @@ const VOTING_DELAY = 1n;        // 1 block (~12 seconds on Sepolia)
 const VOTING_PERIOD = 75n;      // 75 blocks (~15 minutes at 12 sec/block)
 const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADZ required to propose
 const QUORUM_PERCENT = 4n;       // 4% of total supply
+const VOTE_EXTENSION = 25n;      // 25 blocks (~5 minutes) — minimum voting time after quorum is reached
 const TIMELOCK_DELAY = 600;      // 10 minutes in seconds
 
 const WadoozieDAOTestModule = buildModule("WadoozieDAOTestModule", (m) => {
@@ -35,6 +36,7 @@ const WadoozieDAOTestModule = buildModule("WadoozieDAOTestModule", (m) => {
     VOTING_PERIOD,
     PROPOSAL_THRESHOLD,
     QUORUM_PERCENT,
+    VOTE_EXTENSION,
   ]);
 
   // 4. Grant PROPOSER_ROLE to Governor

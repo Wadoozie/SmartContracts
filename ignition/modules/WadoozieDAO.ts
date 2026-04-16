@@ -5,6 +5,7 @@ const VOTING_DELAY = 7200n; // ~1 day in blocks
 const VOTING_PERIOD = 50400n; // ~1 week in blocks
 const PROPOSAL_THRESHOLD = 1_000n * 10n ** 18n; // 1,000 WADZ required to propose
 const QUORUM_PERCENT = 4n; // 4% of total supply
+const VOTE_EXTENSION = 7200n; // ~1 day in blocks — minimum voting time after quorum is reached
 const TIMELOCK_DELAY = 86400; // 1 day in seconds
 
 const WadoozieDAOModule = buildModule("WadoozieDAOModule", (m) => {
@@ -34,6 +35,7 @@ const WadoozieDAOModule = buildModule("WadoozieDAOModule", (m) => {
     VOTING_PERIOD,
     PROPOSAL_THRESHOLD,
     QUORUM_PERCENT,
+    VOTE_EXTENSION,
   ]);
 
   // 4. Grant PROPOSER_ROLE to Governor

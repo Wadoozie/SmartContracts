@@ -7,6 +7,7 @@ import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensi
 import {GovernorVotes} from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import {GovernorVotesQuorumFraction} from "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import {GovernorTimelockControl} from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import {GovernorPreventLateQuorum} from "@openzeppelin/contracts/governance/extensions/GovernorPreventLateQuorum.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
@@ -23,7 +24,8 @@ contract Headquarters is
     GovernorCountingSimple,
     GovernorVotes,
     GovernorVotesQuorumFraction,
-    GovernorTimelockControl
+    GovernorTimelockControl,
+    GovernorPreventLateQuorum
 {
     /// @dev Thrown when updateTimelock is called. Timelock migration is permanently disabled
     ///      to prevent desynchronization between queued proposals and the active timelock.
@@ -36,19 +38,22 @@ contract Headquarters is
     /// @param _votingPeriod  Blocks the voting window stays open
     /// @param _proposalThreshold Minimum voting power required to create a proposal (token units, 18 decimals)
     /// @param _quorumPercent Percentage of total supply required for quorum (e.g., 4 = 4%)
+    /// @param _voteExtension Minimum blocks of voting time remaining after quorum is first reached
     constructor(
         IVotes _token,
         TimelockController _timelock,
         uint48 _votingDelay,
         uint32 _votingPeriod,
         uint256 _proposalThreshold,
-        uint256 _quorumPercent
+        uint256 _quorumPercent,
+        uint48 _voteExtension
     )
         Governor("Headquarters")
         GovernorSettings(_votingDelay, _votingPeriod, _proposalThreshold)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(_quorumPercent)
         GovernorTimelockControl(_timelock)
+        GovernorPreventLateQuorum(_voteExtension)
     {}
 
     // ── Timelock migration disabled ──────────────────────────────────────
@@ -90,6 +95,15 @@ contract Headquarters is
         returns (uint256)
     {
         return super.proposalThreshold();
+    }
+
+    function proposalDeadline(uint256 proposalId)
+        public
+        view
+        override(Governor, GovernorPreventLateQuorum)
+        returns (uint256)
+    {
+        return super.proposalDeadline(proposalId);
     }
 
     function state(uint256 proposalId)
@@ -148,6 +162,13 @@ contract Headquarters is
         returns (uint256)
     {
         return super._cancel(targets, values, calldatas, descriptionHash);
+    }
+
+    function _tallyUpdated(uint256 proposalId)
+        internal
+        override(Governor, GovernorPreventLateQuorum)
+    {
+        super._tallyUpdated(proposalId);
     }
 
     function _executor()

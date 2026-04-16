@@ -12,6 +12,7 @@ export const TEST_PARAMS = {
   PROPOSAL_THRESHOLD: 1_000n * 10n ** 18n, // 1,000 tokens required to propose
   QUORUM_PERCENT: 4n,
   TIMELOCK_DELAY: 60, // seconds
+  VOTE_EXTENSION: 10n, // blocks — minimum voting time after quorum is reached
 };
 
 // ── Governance vote values (GovernorCountingSimple) ────────────────────
@@ -90,6 +91,7 @@ export async function deployDAOFixture(connection: any) {
     TEST_PARAMS.VOTING_PERIOD,
     TEST_PARAMS.PROPOSAL_THRESHOLD,
     TEST_PARAMS.QUORUM_PERCENT,
+    TEST_PARAMS.VOTE_EXTENSION,
   ]);
 
   const governorAddress = await governor.getAddress();
