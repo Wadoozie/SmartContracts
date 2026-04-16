@@ -249,149 +249,16 @@ describe("Headquarters", () => {
     });
   });
 
-  // ── Proposal Guardian ──────────────────────────────────────────────
-  describe("Proposal Guardian", () => {
-    it("deployer is initial guardian", async () => {
-      const { governor, deployer } =
+  // ── Cancellation (no guardian — base Governor behavior) ─────────────
+  describe("Cancellation", () => {
+    it("no proposal guardian is set", async () => {
+      const { governor } =
         await networkHelpers.loadFixture(deployDAOFixture);
-      expect(await governor.proposalGuardian()).to.equal(deployer.address);
+      // GovernorProposalGuardian is removed; proposalGuardian() should not exist
+      expect(governor.proposalGuardian).to.be.undefined;
     });
 
-    it("guardian cancels Pending proposal", async () => {
-      const { governor, token, initialHolder, deployer, voter1 } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-
-      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
-
-      const targets = [voter1.address];
-      const values = [0n];
-      const calldatas = ["0x"];
-      const description = "Guardian cancel pending test";
-
-      const { proposalId } = await propose(
-        governor,
-        initialHolder,
-        targets,
-        values,
-        calldatas,
-        description,
-      );
-
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Pending);
-
-      const descriptionHash = ethers.keccak256(
-        ethers.toUtf8Bytes(description),
-      );
-      await governor
-        .connect(deployer)
-        .cancel(targets, values, calldatas, descriptionHash);
-
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Canceled);
-    });
-
-    it("guardian cancels Active proposal", async () => {
-      const { governor, token, initialHolder, deployer, voter1 } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-
-      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
-
-      const targets = [voter1.address];
-      const values = [0n];
-      const calldatas = ["0x"];
-      const description = "Guardian cancel active test";
-
-      const { proposalId } = await propose(
-        governor,
-        initialHolder,
-        targets,
-        values,
-        calldatas,
-        description,
-      );
-
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Active);
-
-      const descriptionHash = ethers.keccak256(
-        ethers.toUtf8Bytes(description),
-      );
-      await governor
-        .connect(deployer)
-        .cancel(targets, values, calldatas, descriptionHash);
-
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Canceled);
-    });
-
-    it("guardian cancels Queued proposal", async () => {
-      const { governor, token, initialHolder, deployer, voter1 } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-
-      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
-
-      const targets = [voter1.address];
-      const values = [0n];
-      const calldatas = ["0x"];
-      const description = "Guardian cancel queued test";
-
-      const { proposalId } = await propose(
-        governor,
-        initialHolder,
-        targets,
-        values,
-        calldatas,
-        description,
-      );
-
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
-      await governor
-        .connect(initialHolder)
-        .castVote(proposalId, VoteType.For);
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_PERIOD) + 1);
-
-      const descriptionHash = ethers.keccak256(
-        ethers.toUtf8Bytes(description),
-      );
-      await governor.queue(targets, values, calldatas, descriptionHash);
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Queued);
-
-      await governor
-        .connect(deployer)
-        .cancel(targets, values, calldatas, descriptionHash);
-
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Canceled);
-    });
-
-    it("non-guardian cannot cancel other's proposal", async () => {
-      const { governor, token, initialHolder, voter1 } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-
-      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
-
-      const targets = [voter1.address];
-      const values = [0n];
-      const calldatas = ["0x"];
-      const description = "Non-guardian cancel test";
-
-      await propose(
-        governor,
-        initialHolder,
-        targets,
-        values,
-        calldatas,
-        description,
-      );
-
-      const descriptionHash = ethers.keccak256(
-        ethers.toUtf8Bytes(description),
-      );
-      await expect(
-        governor
-          .connect(voter1)
-          .cancel(targets, values, calldatas, descriptionHash),
-      ).to.be.revertedWithCustomError(governor, "GovernorUnableToCancel");
-    });
-
-    it("proposer can still cancel own Pending proposal", async () => {
+    it("proposer can cancel own Pending proposal", async () => {
       const { governor, token, initialHolder, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
 
@@ -421,7 +288,7 @@ describe("Headquarters", () => {
       expect(await governor.state(proposalId)).to.equal(ProposalState.Canceled);
     });
 
-    it("proposer cannot cancel own Active proposal (guardian set)", async () => {
+    it("proposer cannot cancel own Active proposal", async () => {
       const { governor, token, initialHolder, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
 
@@ -453,149 +320,18 @@ describe("Headquarters", () => {
       ).to.be.revertedWithCustomError(governor, "GovernorUnableToCancel");
     });
 
-    it("change guardian via governance", async () => {
-      const { governor, token, timelock, initialHolder, voter1 } =
+    it("non-proposer cannot cancel other's proposal", async () => {
+      const { governor, token, initialHolder, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
 
       await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
 
-      const governorAddress = await governor.getAddress();
-      const calldata = governor.interface.encodeFunctionData(
-        "setProposalGuardian",
-        [voter1.address],
-      );
-
-      const targets = [governorAddress];
-      const values = [0n];
-      const calldatas = [calldata];
-      const description = "Change guardian to voter1";
-
-      const { proposalId } = await propose(
-        governor,
-        initialHolder,
-        targets,
-        values,
-        calldatas,
-        description,
-      );
-
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
-      await governor
-        .connect(initialHolder)
-        .castVote(proposalId, VoteType.For);
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_PERIOD) + 1);
-
-      const descriptionHash = ethers.keccak256(
-        ethers.toUtf8Bytes(description),
-      );
-      await governor.queue(targets, values, calldatas, descriptionHash);
-      await networkHelpers.time.increase(TEST_PARAMS.TIMELOCK_DELAY + 1);
-      await governor.execute(targets, values, calldatas, descriptionHash);
-
-      expect(await governor.proposalGuardian()).to.equal(voter1.address);
-    });
-
-    it("remove guardian via governance", async () => {
-      const { governor, token, timelock, initialHolder } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-
-      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
-
-      const governorAddress = await governor.getAddress();
-      const calldata = governor.interface.encodeFunctionData(
-        "setProposalGuardian",
-        [ethers.ZeroAddress],
-      );
-
-      const targets = [governorAddress];
-      const values = [0n];
-      const calldatas = [calldata];
-      const description = "Remove guardian";
-
-      const { proposalId } = await propose(
-        governor,
-        initialHolder,
-        targets,
-        values,
-        calldatas,
-        description,
-      );
-
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
-      await governor
-        .connect(initialHolder)
-        .castVote(proposalId, VoteType.For);
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_PERIOD) + 1);
-
-      const descriptionHash = ethers.keccak256(
-        ethers.toUtf8Bytes(description),
-      );
-      await governor.queue(targets, values, calldatas, descriptionHash);
-      await networkHelpers.time.increase(TEST_PARAMS.TIMELOCK_DELAY + 1);
-      await governor.execute(targets, values, calldatas, descriptionHash);
-
-      expect(await governor.proposalGuardian()).to.equal(ethers.ZeroAddress);
-    });
-
-    it("proposer cancels at Active when no guardian", async () => {
-      const { governor, token, timelock, initialHolder, voter1 } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-
-      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
-
-      // First: remove guardian via governance
-      const governorAddress = await governor.getAddress();
-      const removeCalldata = governor.interface.encodeFunctionData(
-        "setProposalGuardian",
-        [ethers.ZeroAddress],
-      );
-
-      const removeTargets = [governorAddress];
-      const removeValues = [0n];
-      const removeCalldatas = [removeCalldata];
-      const removeDescription = "Remove guardian for cancel test";
-
-      const { proposalId: removeProposalId } = await propose(
-        governor,
-        initialHolder,
-        removeTargets,
-        removeValues,
-        removeCalldatas,
-        removeDescription,
-      );
-
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
-      await governor
-        .connect(initialHolder)
-        .castVote(removeProposalId, VoteType.For);
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_PERIOD) + 1);
-
-      const removeDescHash = ethers.keccak256(
-        ethers.toUtf8Bytes(removeDescription),
-      );
-      await governor.queue(
-        removeTargets,
-        removeValues,
-        removeCalldatas,
-        removeDescHash,
-      );
-      await networkHelpers.time.increase(TEST_PARAMS.TIMELOCK_DELAY + 1);
-      await governor.execute(
-        removeTargets,
-        removeValues,
-        removeCalldatas,
-        removeDescHash,
-      );
-
-      expect(await governor.proposalGuardian()).to.equal(ethers.ZeroAddress);
-
-      // Now: proposer should be able to cancel Active proposal
       const targets = [voter1.address];
       const values = [0n];
       const calldatas = ["0x"];
-      const description = "Proposer cancel active no guardian";
+      const description = "Non-proposer cancel test";
 
-      const { proposalId } = await propose(
+      await propose(
         governor,
         initialHolder,
         targets,
@@ -604,17 +340,14 @@ describe("Headquarters", () => {
         description,
       );
 
-      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Active);
-
       const descriptionHash = ethers.keccak256(
         ethers.toUtf8Bytes(description),
       );
-      await governor
-        .connect(initialHolder)
-        .cancel(targets, values, calldatas, descriptionHash);
-
-      expect(await governor.state(proposalId)).to.equal(ProposalState.Canceled);
+      await expect(
+        governor
+          .connect(voter1)
+          .cancel(targets, values, calldatas, descriptionHash),
+      ).to.be.revertedWithCustomError(governor, "GovernorUnableToCancel");
     });
   });
 

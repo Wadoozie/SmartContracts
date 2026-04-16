@@ -10,7 +10,6 @@ const TIMELOCK_DELAY = 86400; // 1 day in seconds
 const WadoozieDAOModule = buildModule("WadoozieDAOModule", (m) => {
   const deployer = m.getAccount(0);
   const initialHolder = m.getParameter("initialHolder", deployer);
-  const guardian = m.getParameter("guardian", deployer);
 
   // 1. Deploy Wadoozie — entire supply goes to initialHolder
   const token = m.contract("Wadoozie", [initialHolder]);
@@ -35,7 +34,6 @@ const WadoozieDAOModule = buildModule("WadoozieDAOModule", (m) => {
     VOTING_PERIOD,
     PROPOSAL_THRESHOLD,
     QUORUM_PERCENT,
-    guardian,
   ]);
 
   // 4. Grant PROPOSER_ROLE to Governor

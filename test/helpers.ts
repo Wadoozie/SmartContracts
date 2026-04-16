@@ -90,7 +90,6 @@ export async function deployDAOFixture(connection: any) {
     TEST_PARAMS.VOTING_PERIOD,
     TEST_PARAMS.PROPOSAL_THRESHOLD,
     TEST_PARAMS.QUORUM_PERCENT,
-    deployer.address,
   ]);
 
   const governorAddress = await governor.getAddress();
