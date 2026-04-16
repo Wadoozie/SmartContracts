@@ -618,6 +618,54 @@ describe("Headquarters", () => {
     });
   });
 
+  // ── Timelock Immutability ───────────────────────────────────────────
+  describe("Timelock Immutability", () => {
+    it("should revert updateTimelock even via governance", async () => {
+      const { governor, token, initialHolder } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+
+      await delegateAndMine(token, initialHolder, initialHolder, networkHelpers);
+
+      const governorAddress = await governor.getAddress();
+      // Encode a call to updateTimelock with an arbitrary address
+      const calldata = governor.interface.encodeFunctionData(
+        "updateTimelock",
+        [initialHolder.address],
+      );
+
+      const targets = [governorAddress];
+      const values = [0n];
+      const calldatas = [calldata];
+      const description = "Attempt timelock migration";
+
+      const { proposalId } = await propose(
+        governor,
+        initialHolder,
+        targets,
+        values,
+        calldatas,
+        description,
+      );
+
+      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_DELAY) + 1);
+      await governor
+        .connect(initialHolder)
+        .castVote(proposalId, VoteType.For);
+      await networkHelpers.mine(Number(TEST_PARAMS.VOTING_PERIOD) + 1);
+
+      const descriptionHash = ethers.keccak256(
+        ethers.toUtf8Bytes(description),
+      );
+      await governor.queue(targets, values, calldatas, descriptionHash);
+      await networkHelpers.time.increase(TEST_PARAMS.TIMELOCK_DELAY + 1);
+
+      // Execution should revert because updateTimelock always reverts
+      await expect(
+        governor.execute(targets, values, calldatas, descriptionHash),
+      ).to.be.revertedWithCustomError(governor, "HeadquartersTimelockImmutable");
+    });
+  });
+
   // ── Proposal States ─────────────────────────────────────────────────
   describe("Proposal States", () => {
     it("should transition to Active after voting delay", async () => {

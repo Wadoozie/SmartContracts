@@ -34,6 +34,11 @@ contract Headquarters is
     ///      Use setProposalGuardian(address(0)) via governance to remove the guardian later.
     error HeadquartersInvalidGuardian();
 
+    /// @dev Thrown when updateTimelock is called. Timelock migration is permanently disabled
+    ///      to prevent desynchronization between queued proposals and the active timelock.
+    ///      Deploy a new governor if a new timelock is needed.
+    error HeadquartersTimelockImmutable();
+
     /// @param _token         ERC20Votes governance token
     /// @param _timelock      TimelockController used for proposal execution delay
     /// @param _votingDelay   Blocks between proposal creation and vote start
@@ -58,6 +63,18 @@ contract Headquarters is
     {
         if (_guardian == address(0)) revert HeadquartersInvalidGuardian();
         _setProposalGuardian(_guardian);
+    }
+
+    // ── Timelock migration disabled ──────────────────────────────────────
+    //
+    // GovernorTimelockControl exposes updateTimelock() which allows swapping
+    // the timelock via governance. This creates a desync: proposals queued on
+    // the old timelock become unmanageable through the governor, and with open
+    // executor permissions (address(0)), stale batches can be executed directly.
+    // We disable this entirely — deploy a new governor if migration is needed.
+
+    function updateTimelock(TimelockController) public virtual override {
+        revert HeadquartersTimelockImmutable();
     }
 
     // ── Required overrides ──────────────────────────────────────────────
