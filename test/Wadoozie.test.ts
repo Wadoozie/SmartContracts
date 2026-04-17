@@ -280,6 +280,89 @@ describe("WadoozieToken", () => {
     });
   });
 
+  // ── Auto-Delegation (WAD-04) ─────────────────────────────────────────
+  describe("Auto-Delegation (WAD-04)", () => {
+    it("initial holder is not auto-delegated on mint", async () => {
+      const { token, initialHolder } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+
+      expect(await token.delegates(initialHolder.address)).to.equal(
+        ethers.ZeroAddress,
+      );
+      expect(await token.getVotes(initialHolder.address)).to.equal(0n);
+    });
+
+    it("recipient is auto-self-delegated on first transfer", async () => {
+      const { token, initialHolder, voter1 } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      const amount = ethers.parseEther("1000");
+
+      expect(await token.delegates(voter1.address)).to.equal(
+        ethers.ZeroAddress,
+      );
+
+      await expect(
+        token.connect(initialHolder).transfer(voter1.address, amount),
+      )
+        .to.emit(token, "DelegateChanged")
+        .withArgs(voter1.address, ethers.ZeroAddress, voter1.address);
+
+      expect(await token.delegates(voter1.address)).to.equal(voter1.address);
+      expect(await token.getVotes(voter1.address)).to.equal(amount);
+    });
+
+    it("does not override an existing delegation", async () => {
+      const { token, initialHolder, voter1, voter2 } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      const amount = ethers.parseEther("1000");
+
+      // voter1 delegates to voter2 before ever holding tokens.
+      await token.connect(voter1).delegate(voter2.address);
+      expect(await token.delegates(voter1.address)).to.equal(voter2.address);
+
+      await token.connect(initialHolder).transfer(voter1.address, amount);
+
+      expect(await token.delegates(voter1.address)).to.equal(voter2.address);
+      expect(await token.getVotes(voter2.address)).to.equal(amount);
+      expect(await token.getVotes(voter1.address)).to.equal(0n);
+    });
+
+    it("second transfer to same recipient does not re-delegate", async () => {
+      const { token, initialHolder, voter1 } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      const amount = ethers.parseEther("500");
+
+      await expect(
+        token.connect(initialHolder).transfer(voter1.address, amount),
+      ).to.emit(token, "DelegateChanged");
+
+      await expect(
+        token.connect(initialHolder).transfer(voter1.address, amount),
+      ).to.not.emit(token, "DelegateChanged");
+
+      expect(await token.delegates(voter1.address)).to.equal(voter1.address);
+      expect(await token.getVotes(voter1.address)).to.equal(amount * 2n);
+    });
+
+    it("self-transfer does not fail when already delegated", async () => {
+      const { token, initialHolder, voter1 } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      const amount = ethers.parseEther("100");
+
+      // First transfer triggers auto-delegation.
+      await token.connect(initialHolder).transfer(voter1.address, amount);
+      expect(await token.delegates(voter1.address)).to.equal(voter1.address);
+
+      // Self-transfer should not revert and should leave delegation intact.
+      await expect(
+        token.connect(voter1).transfer(voter1.address, amount),
+      ).to.not.be.revert(ethers);
+
+      expect(await token.delegates(voter1.address)).to.equal(voter1.address);
+      expect(await token.getVotes(voter1.address)).to.equal(amount);
+    });
+  });
+
   // ── Immutability ─────────────────────────────────────────────────────
   describe("Immutability", () => {
     it("should not have a mint function", async () => {

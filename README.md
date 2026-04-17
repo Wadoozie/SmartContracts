@@ -56,7 +56,7 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 - No `pause` function — transfers cannot be halted
 - No `owner` / `Ownable` — no admin key exists
 
-The entire supply is minted to `initialHolder` in the constructor. Voting power is inactive until a holder calls `delegate()`.
+The entire supply is minted to `initialHolder` in the constructor. To avoid governance stalling on un-delegated supply (WAD-04), Wadoozie auto self-delegates recipients the first time they receive tokens via a transfer — voting power activates on arrival without requiring a separate `delegate()` call. The initial mint is intentionally skipped, so `initialHolder` (treasury / distributor) must still call `delegate()` explicitly before it can vote or propose. Any delegation a holder has already set — to self or someone else — is never overridden.
 
 ---
 
@@ -285,7 +285,7 @@ Before deploying to Ethereum mainnet:
    - Timelock `hasRole(CANCELLER_ROLE, governorAddress)` returns `true`
    - Timelock `hasRole(DEFAULT_ADMIN_ROLE, deployerAddress)` returns `false`
 
-8. **Delegate tokens** — the `initialHolder` must call `delegate(ownAddress)` to activate voting power before any proposals can pass quorum.
+8. **Delegate tokens** — the `initialHolder` must call `delegate(ownAddress)` to activate voting power before any proposals can pass quorum. Downstream recipients do not need to do this manually — the token auto self-delegates them on their first incoming transfer (see "Auto-delegation" in the Token Specification section).
 
 ---
 
@@ -352,7 +352,7 @@ WadoozieTimelock
 | Issue | Mitigation |
 |---|---|
 | Guardian deadlock — compromised guardian cancels its own replacement proposal | Use a multisig as guardian, never a single wallet |
-| Voter apathy — quorum not reached | 4% quorum is intentionally low; adjustable via governance |
+| Voter apathy — quorum not reached | Recipients are auto self-delegated on first transfer (WAD-04 mitigation), so most circulating supply contributes to quorum without manual opt-in. Quorum is also intentionally low (4%) and adjustable via governance. |
 | Flash loan attacks on voting | ERC20Votes uses checkpoints at proposal snapshot block, not current balance |
 | Timelock bypass | Not possible — `GovernorTimelockControl` enforces queueing for all proposals |
 

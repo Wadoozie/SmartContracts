@@ -9,6 +9,11 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 /// @title Wadoozie — The governance token
 /// @notice ERC20 with fixed 1B supply, ERC20Permit for gasless approvals, and ERC20Votes for governance.
 ///         No mint, no burn, no pause, no owner — fully immutable after deployment.
+///         Recipients are auto self-delegated on their first incoming transfer so that voting
+///         power activates without a separate delegate() call (WAD-04 mitigation). The initial
+///         mint is intentionally skipped, so `initialHolder` (treasury/distributor) still has
+///         to opt in explicitly via delegate() before it can vote or propose. Any delegation a
+///         recipient has already set (to self or someone else) is never overridden.
 /// @dev    Immutable after deployment. Token name and symbol are set in the constructor.
 contract Wadoozie is ERC20, ERC20Permit, ERC20Votes {
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 ether;
@@ -24,6 +29,18 @@ contract Wadoozie is ERC20, ERC20Permit, ERC20Votes {
         override(ERC20, ERC20Votes)
     {
         super._update(from, to, value);
+
+        // WAD-04 mitigation: auto self-delegate a recipient the first time they
+        // receive tokens via transfer, so governance quorum (computed against
+        // total supply) is reachable without every holder having to call
+        // delegate() manually.
+        // - Mints (from == address(0)) are skipped so the initial distributor
+        //   keeps the explicit opt-in behavior documented in the README.
+        // - Recipients who already have a delegate set (to themselves or
+        //   someone else) are never overridden.
+        if (from != address(0) && to != address(0) && delegates(to) == address(0)) {
+            _delegate(to, to);
+        }
     }
 
     function nonces(address owner)
