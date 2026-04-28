@@ -29,7 +29,7 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 |---|---|---|
 | **Wadoozie** | `contracts/Wadoozie.sol` | ERC-20 governance token with fixed supply, delegation, and gasless approvals |
 | **Headquarters** | `contracts/Headquarters.sol` | OpenZeppelin Governor — proposal creation, voting, queueing, execution |
-| **WadoozieTimelock** | `contracts/WadoozieTimelock.sol` | TimelockController wrapper — treasury, execution delay, role-based access |
+| **WadoozieTreasury** | `contracts/WadoozieTreasury.sol` | TimelockController wrapper — treasury, execution delay, role-based access |
 
 ---
 
@@ -207,7 +207,7 @@ Contracts must be deployed in this order due to constructor dependencies:
 
 ```
 1. Wadoozie Token
-2. WadoozieTimelock
+2. WadoozieTreasury
 3. Headquarters (requires token + timelock addresses)
 4. Grant PROPOSER_ROLE to Headquarters on Timelock
 5. Grant CANCELLER_ROLE to Headquarters on Timelock
@@ -343,7 +343,7 @@ Headquarters
 ├── GovernorTimelockControl
 └── GovernorProposalGuardian
 
-WadoozieTimelock
+WadoozieTreasury
 └── TimelockController
 ```
 

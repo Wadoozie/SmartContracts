@@ -10,7 +10,7 @@ async function main() {
   const ethers = hre.ethers;
   const [deployer] = await ethers.getSigners();
 
-  const timelock = await ethers.getContractAt("WadoozieTimelock", TIMELOCK);
+  const timelock = await ethers.getContractAt("WadoozieTreasury", TIMELOCK);
 
   const PROPOSER_ROLE = await timelock.PROPOSER_ROLE();
   const CANCELLER_ROLE = await timelock.CANCELLER_ROLE();

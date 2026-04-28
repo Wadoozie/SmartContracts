@@ -15,7 +15,7 @@ async function main() {
   const VOTING_DELAY = 1n;
   const VOTING_PERIOD = 75n;
   const PROPOSAL_THRESHOLD = 0n;
-  const QUORUM_PERCENT = 4n;
+  const QUORUM_NUMERATOR = 350n;
   const TIMELOCK_DELAY = 600;
 
   // 1. Deploy Token
@@ -27,8 +27,8 @@ async function main() {
   console.log("✅ Token:", tokenAddress);
 
   // 2. Deploy Timelock
-  console.log("\n🏦 Deploying WadoozieTimelock...");
-  const Timelock = await ethers.getContractFactory("WadoozieTimelock");
+  console.log("\n🏦 Deploying WadoozieTreasury...");
+  const Timelock = await ethers.getContractFactory("WadoozieTreasury");
   const timelock = await Timelock.deploy(
     TIMELOCK_DELAY,
     [],
@@ -48,7 +48,7 @@ async function main() {
     VOTING_DELAY,
     VOTING_PERIOD,
     PROPOSAL_THRESHOLD,
-    QUORUM_PERCENT,
+    QUORUM_NUMERATOR,
     deployer.address // proposal guardian
   );
   await governor.waitForDeployment();

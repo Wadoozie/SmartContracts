@@ -10,7 +10,7 @@ export const TEST_PARAMS = {
   VOTING_DELAY: 10n, // blocks
   VOTING_PERIOD: 50n, // blocks
   PROPOSAL_THRESHOLD: 1_000n * 10n ** 18n, // 1,000 tokens required to propose
-  QUORUM_PERCENT: 4n,
+  QUORUM_NUMERATOR: 350n,
   TIMELOCK_DELAY: 60, // seconds
   VOTE_EXTENSION: 10n, // blocks — minimum voting time after quorum is reached
 };
@@ -90,7 +90,7 @@ export async function deployDAOFixture(connection: any) {
     TEST_PARAMS.VOTING_DELAY,
     TEST_PARAMS.VOTING_PERIOD,
     TEST_PARAMS.PROPOSAL_THRESHOLD,
-    TEST_PARAMS.QUORUM_PERCENT,
+    TEST_PARAMS.QUORUM_NUMERATOR,
     TEST_PARAMS.VOTE_EXTENSION,
   ]);
 

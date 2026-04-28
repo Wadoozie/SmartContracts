@@ -96,7 +96,7 @@ add_table(
     [
         ["Wadoozie (WADZ)", "The governance token. Holding it gives you voting power (after delegation)."],
         ["Headquarters (Governor)", "The governance hub. Proposals are created, voted on, queued, and executed here."],
-        ["WadoozieTimelock (Treasury)", "The time-delayed treasury. Approved proposals wait here before execution, giving the community a window to react."],
+        ["WadoozieTreasury", "The time-delayed treasury. Approved proposals wait here before execution, giving the community a window to react."],
     ],
 )
 
@@ -188,7 +188,7 @@ add_table(
     ["Parameter", "Type", "Description", "Recommended Value"],
     [
         ["_token", "address", "Address of the deployed Wadoozie token.", "(deployed address)"],
-        ["_timelock", "address", "Address of the deployed WadoozieTimelock.", "(deployed address)"],
+        ["_timelock", "address", "Address of the deployed WadoozieTreasury.", "(deployed address)"],
         ["_votingDelay", "uint48", "Number of blocks between proposal creation and voting start.", "7,200 (~1 day)"],
         ["_votingPeriod", "uint32", "Number of blocks the voting window stays open.", "50,400 (~1 week)"],
         ["_proposalThreshold", "uint256", "Minimum delegated voting power required to create a proposal (in token units with 18 decimals).", "1,000 WADZ"],
@@ -298,7 +298,7 @@ doc.add_paragraph(
 # 4. WADOOZIE TIMELOCK (TREASURY)
 # ═══════════════════════════════════════════════════════════════════════════
 
-doc.add_heading("4. WadoozieTimelock (Treasury)", level=1)
+doc.add_heading("4. WadoozieTreasury", level=1)
 
 doc.add_paragraph(
     "The Timelock is the DAO's treasury and execution delay. When a "
@@ -388,7 +388,7 @@ steps = [
         "The entire 1 billion supply goes to this address."
     ),
     (
-        "Deploy the WadoozieTimelock",
+        "Deploy the WadoozieTreasury",
         "Deploy with:\n"
         "  - minDelay = 86400 (1 day)\n"
         "  - proposers = [] (empty array)\n"

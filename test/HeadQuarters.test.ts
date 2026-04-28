@@ -41,7 +41,7 @@ describe("Headquarters", () => {
       const { governor } =
         await networkHelpers.loadFixture(deployDAOFixture);
       expect(await governor["quorumNumerator()"]()).to.equal(
-        TEST_PARAMS.QUORUM_PERCENT,
+        TEST_PARAMS.QUORUM_NUMERATOR,
       );
     });
 

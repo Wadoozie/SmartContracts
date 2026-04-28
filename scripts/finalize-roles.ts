@@ -7,7 +7,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
 
   const timelock = await ethers.getContractAt(
-    "WadoozieTimelock",
+    "WadoozieTreasury",
     "0x5800bf5aE75549A3FcF050BF7e46aC859917325e"
   );
 

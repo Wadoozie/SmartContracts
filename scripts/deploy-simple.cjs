@@ -12,7 +12,7 @@ async function main() {
   const VOTING_DELAY = 1n;        // 1 block (~12 seconds)
   const VOTING_PERIOD = 75n;      // 75 blocks (~15 minutes)
   const PROPOSAL_THRESHOLD = 0n;
-  const QUORUM_PERCENT = 4n;      // 4% of supply
+  const QUORUM_NUMERATOR = 350n;  // 3.5% of supply (numerator over 10000)
   const TIMELOCK_DELAY = 600;     // 10 minutes
 
   // 1. Deploy Token
@@ -24,8 +24,8 @@ async function main() {
   console.log("✅ Token:", tokenAddress);
 
   // 2. Deploy Timelock
-  console.log("\n🏦 Deploying WadoozieTimelock (ThePitStop)...");
-  const Timelock = await hre.ethers.getContractFactory("WadoozieTimelock");
+  console.log("\n🏦 Deploying WadoozieTreasury (ThePitStop)...");
+  const Timelock = await hre.ethers.getContractFactory("WadoozieTreasury");
   const timelock = await Timelock.deploy(
     TIMELOCK_DELAY,
     [],
@@ -45,7 +45,7 @@ async function main() {
     VOTING_DELAY,
     VOTING_PERIOD,
     PROPOSAL_THRESHOLD,
-    QUORUM_PERCENT,
+    QUORUM_NUMERATOR,
     deployer.address // proposal guardian
   );
   await governor.waitForDeployment();
@@ -75,7 +75,7 @@ async function main() {
   console.log("=".repeat(60));
   console.log("\n📋 Contract Addresses:");
   console.log("   Wadoozie (Token):        ", tokenAddress);
-  console.log("   WadoozieTimelock:        ", timelockAddress);
+  console.log("   WadoozieTreasury:        ", timelockAddress);
   console.log("   Headquarters (Governor): ", governorAddress);
   console.log("\n⚡ Parameters:");
   console.log("   Voting Delay:    1 block (~12 seconds)");
