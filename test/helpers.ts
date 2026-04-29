@@ -6,7 +6,15 @@ import path from "path";
 export const TEST_PARAMS = {
   TOKEN_NAME: "Wadoozie",
   TOKEN_SYMBOL: "WADZ",
-  TOTAL_SUPPLY: 1_000_000_000n * 10n ** 18n, // 1B tokens
+  TOTAL_SUPPLY: 2_000_000_000n * 10n ** 18n,
+  BURN_AT_LAUNCH: 999_999_999n * 10n ** 18n,
+  EFFECTIVE_SUPPLY: 1_000_000_001n * 10n ** 18n,
+  LP_ALLOCATION: 750_000_001n * 10n ** 18n,
+  TREASURY_ALLOCATION: 100_000_000n * 10n ** 18n,
+  PUBLISHER_ALLOCATION: 70_000_000n * 10n ** 18n,
+  FRAGMENT_ALLOCATION: 50_000_000n * 10n ** 18n,
+  TEAM_ALLOCATION: 30_000_000n * 10n ** 18n,
+  BURN_ADDRESS: "0x000000000000000000000000000000000000dEaD",
   VOTING_DELAY: 10n, // blocks
   VOTING_PERIOD: 50n, // blocks
   PROPOSAL_THRESHOLD: 1_000n * 10n ** 18n, // 1,000 tokens required to propose
@@ -66,12 +74,26 @@ async function getTimelockFactory(ethers: any, signer: any) {
 // ── Deploy fixture ─────────────────────────────────────────────────────
 export async function deployDAOFixture(connection: any) {
   const { ethers } = connection;
-  const [deployer, initialHolder, voter1, voter2, voter3] =
-    await ethers.getSigners();
+  const [
+    deployer,
+    lpWallet,
+    treasury,
+    publisher,
+    fragment,
+    teamVesting,
+    voter1,
+    voter2,
+    voter3,
+  ] = await ethers.getSigners();
 
-  // 1. Deploy Wadoozie
+  // 1. Deploy Wadoozie with six-wallet genesis distribution
   const token = await ethers.deployContract("Wadoozie", [
-    initialHolder.address,
+    deployer.address,
+    lpWallet.address,
+    treasury.address,
+    publisher.address,
+    fragment.address,
+    teamVesting.address,
   ]);
 
   // 2. Deploy TimelockController (from build info, not artifact)
@@ -113,7 +135,15 @@ export async function deployDAOFixture(connection: any) {
     timelock,
     governor,
     deployer,
-    initialHolder,
+    lpWallet,
+    treasury,
+    publisher,
+    fragment,
+    teamVesting,
+    // Back-compat alias: legacy tests reference `initialHolder` as the
+    // primary token-bearing signer. With the six-wallet genesis, that role
+    // is filled by `lpWallet` (750,000,001 tokens, auto-self-delegated).
+    initialHolder: lpWallet,
     voter1,
     voter2,
     voter3,

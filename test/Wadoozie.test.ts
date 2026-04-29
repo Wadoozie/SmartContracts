@@ -14,17 +14,9 @@ describe("WadoozieToken", () => {
       expect(await token.symbol()).to.equal(TEST_PARAMS.TOKEN_SYMBOL);
     });
 
-    it("should have correct total supply", async () => {
+    it("should have total supply of 2B (burn does not decrease supply)", async () => {
       const { token } = await networkHelpers.loadFixture(deployDAOFixture);
       expect(await token.totalSupply()).to.equal(TEST_PARAMS.TOTAL_SUPPLY);
-    });
-
-    it("should assign entire supply to initial holder", async () => {
-      const { token, initialHolder } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-      expect(await token.balanceOf(initialHolder.address)).to.equal(
-        TEST_PARAMS.TOTAL_SUPPLY,
-      );
     });
 
     it("should have 18 decimals", async () => {
@@ -33,18 +25,195 @@ describe("WadoozieToken", () => {
     });
   });
 
+  // ── Genesis Distribution ─────────────────────────────────────────────
+  describe("Genesis Distribution", () => {
+    it("burn address holds BURN_AT_LAUNCH (999,999,999)", async () => {
+      const { token } = await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.balanceOf(TEST_PARAMS.BURN_ADDRESS)).to.equal(
+        TEST_PARAMS.BURN_AT_LAUNCH,
+      );
+    });
+
+    it("LP wallet holds LP_ALLOCATION (750,000,001)", async () => {
+      const { token, lpWallet } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.balanceOf(lpWallet.address)).to.equal(
+        TEST_PARAMS.LP_ALLOCATION,
+      );
+    });
+
+    it("treasury holds TREASURY_ALLOCATION (100,000,000)", async () => {
+      const { token, treasury } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.balanceOf(treasury.address)).to.equal(
+        TEST_PARAMS.TREASURY_ALLOCATION,
+      );
+    });
+
+    it("publisher rewards holds PUBLISHER_ALLOCATION (70,000,000)", async () => {
+      const { token, publisher } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.balanceOf(publisher.address)).to.equal(
+        TEST_PARAMS.PUBLISHER_ALLOCATION,
+      );
+    });
+
+    it("signal fragments holds FRAGMENT_ALLOCATION (50,000,000)", async () => {
+      const { token, fragment } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.balanceOf(fragment.address)).to.equal(
+        TEST_PARAMS.FRAGMENT_ALLOCATION,
+      );
+    });
+
+    it("team vesting holds TEAM_ALLOCATION (30,000,000)", async () => {
+      const { token, teamVesting } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.balanceOf(teamVesting.address)).to.equal(
+        TEST_PARAMS.TEAM_ALLOCATION,
+      );
+    });
+
+    it("deployer holds zero after constructor", async () => {
+      const { token, deployer } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.balanceOf(deployer.address)).to.equal(0n);
+    });
+
+    it("sum of all allocations + burn equals TOTAL_SUPPLY", async () => {
+      const sum =
+        TEST_PARAMS.BURN_AT_LAUNCH +
+        TEST_PARAMS.LP_ALLOCATION +
+        TEST_PARAMS.TREASURY_ALLOCATION +
+        TEST_PARAMS.PUBLISHER_ALLOCATION +
+        TEST_PARAMS.FRAGMENT_ALLOCATION +
+        TEST_PARAMS.TEAM_ALLOCATION;
+      expect(sum).to.equal(TEST_PARAMS.TOTAL_SUPPLY);
+    });
+
+    it("immutable getters return the addresses passed to constructor", async () => {
+      const { token, lpWallet, treasury, publisher, fragment, teamVesting } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.LP_WALLET()).to.equal(lpWallet.address);
+      expect(await token.TREASURY()).to.equal(treasury.address);
+      expect(await token.PUBLISHER_REWARDS()).to.equal(publisher.address);
+      expect(await token.SIGNAL_FRAGMENTS()).to.equal(fragment.address);
+      expect(await token.TEAM_VESTING()).to.equal(teamVesting.address);
+    });
+
+    it("BURN_ADDRESS constant matches 0x...dEaD", async () => {
+      const { token } = await networkHelpers.loadFixture(deployDAOFixture);
+      expect((await token.BURN_ADDRESS()).toLowerCase()).to.equal(
+        TEST_PARAMS.BURN_ADDRESS.toLowerCase(),
+      );
+    });
+  });
+
+  // ── Constructor reverts on zero addresses ────────────────────────────
+  describe("Constructor zero-address reverts", () => {
+    it("reverts when deployer is zero", async () => {
+      const [, lpWallet, treasury, publisher, fragment, teamVesting] =
+        await ethers.getSigners();
+      await expect(
+        ethers.deployContract("Wadoozie", [
+          ethers.ZeroAddress,
+          lpWallet.address,
+          treasury.address,
+          publisher.address,
+          fragment.address,
+          teamVesting.address,
+        ]),
+      ).to.be.revertedWith("Wadoozie: deployer is zero");
+    });
+
+    it("reverts when lp wallet is zero", async () => {
+      const [deployer, , treasury, publisher, fragment, teamVesting] =
+        await ethers.getSigners();
+      await expect(
+        ethers.deployContract("Wadoozie", [
+          deployer.address,
+          ethers.ZeroAddress,
+          treasury.address,
+          publisher.address,
+          fragment.address,
+          teamVesting.address,
+        ]),
+      ).to.be.revertedWith("Wadoozie: lp wallet is zero");
+    });
+
+    it("reverts when treasury is zero", async () => {
+      const [deployer, lpWallet, , publisher, fragment, teamVesting] =
+        await ethers.getSigners();
+      await expect(
+        ethers.deployContract("Wadoozie", [
+          deployer.address,
+          lpWallet.address,
+          ethers.ZeroAddress,
+          publisher.address,
+          fragment.address,
+          teamVesting.address,
+        ]),
+      ).to.be.revertedWith("Wadoozie: treasury is zero");
+    });
+
+    it("reverts when publisher rewards is zero", async () => {
+      const [deployer, lpWallet, treasury, , fragment, teamVesting] =
+        await ethers.getSigners();
+      await expect(
+        ethers.deployContract("Wadoozie", [
+          deployer.address,
+          lpWallet.address,
+          treasury.address,
+          ethers.ZeroAddress,
+          fragment.address,
+          teamVesting.address,
+        ]),
+      ).to.be.revertedWith("Wadoozie: publisher rewards is zero");
+    });
+
+    it("reverts when signal fragments is zero", async () => {
+      const [deployer, lpWallet, treasury, publisher, , teamVesting] =
+        await ethers.getSigners();
+      await expect(
+        ethers.deployContract("Wadoozie", [
+          deployer.address,
+          lpWallet.address,
+          treasury.address,
+          publisher.address,
+          ethers.ZeroAddress,
+          teamVesting.address,
+        ]),
+      ).to.be.revertedWith("Wadoozie: signal fragments is zero");
+    });
+
+    it("reverts when team vesting is zero", async () => {
+      const [deployer, lpWallet, treasury, publisher, fragment] =
+        await ethers.getSigners();
+      await expect(
+        ethers.deployContract("Wadoozie", [
+          deployer.address,
+          lpWallet.address,
+          treasury.address,
+          publisher.address,
+          fragment.address,
+          ethers.ZeroAddress,
+        ]),
+      ).to.be.revertedWith("Wadoozie: team vesting is zero");
+    });
+  });
+
   // ── Transfers ────────────────────────────────────────────────────────
   describe("Transfers", () => {
     it("should transfer tokens between accounts", async () => {
-      const { token, initialHolder, voter1 } =
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("1000");
 
       await expect(
-        token.connect(initialHolder).transfer(voter1.address, amount),
+        token.connect(lpWallet).transfer(voter1.address, amount),
       )
         .to.emit(token, "Transfer")
-        .withArgs(initialHolder.address, voter1.address, amount);
+        .withArgs(lpWallet.address, voter1.address, amount);
 
       expect(await token.balanceOf(voter1.address)).to.equal(amount);
     });
@@ -60,12 +229,12 @@ describe("WadoozieToken", () => {
     });
 
     it("should update balances after transfers", async () => {
-      const { token, initialHolder, voter1, voter2 } =
+      const { token, lpWallet, voter1, voter2 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount1 = ethers.parseEther("100");
       const amount2 = ethers.parseEther("50");
 
-      await token.connect(initialHolder).transfer(voter1.address, amount1);
+      await token.connect(lpWallet).transfer(voter1.address, amount1);
       await token.connect(voter1).transfer(voter2.address, amount2);
 
       expect(await token.balanceOf(voter1.address)).to.equal(
@@ -78,10 +247,10 @@ describe("WadoozieToken", () => {
   // ── Permit (gasless approvals) ───────────────────────────────────────
   describe("Permit", () => {
     it("should accept valid permit signature", async () => {
-      const { token, initialHolder, voter1 } =
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("500");
-      const nonce = await token.nonces(initialHolder.address);
+      const nonce = await token.nonces(lpWallet.address);
       const deadline = BigInt(await networkHelpers.time.latest()) + 3600n;
 
       const tokenAddress = await token.getAddress();
@@ -101,18 +270,18 @@ describe("WadoozieToken", () => {
         ],
       };
       const value = {
-        owner: initialHolder.address,
+        owner: lpWallet.address,
         spender: voter1.address,
         value: amount,
         nonce,
         deadline,
       };
 
-      const sig = await initialHolder.signTypedData(domain, types, value);
+      const sig = await lpWallet.signTypedData(domain, types, value);
       const { v, r, s } = ethers.Signature.from(sig);
 
       await token.permit(
-        initialHolder.address,
+        lpWallet.address,
         voter1.address,
         amount,
         deadline,
@@ -122,15 +291,15 @@ describe("WadoozieToken", () => {
       );
 
       expect(
-        await token.allowance(initialHolder.address, voter1.address),
+        await token.allowance(lpWallet.address, voter1.address),
       ).to.equal(amount);
     });
 
     it("should reject expired permit", async () => {
-      const { token, initialHolder, voter1 } =
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("500");
-      const nonce = await token.nonces(initialHolder.address);
+      const nonce = await token.nonces(lpWallet.address);
       const deadline = BigInt(await networkHelpers.time.latest()) - 1n; // expired
 
       const tokenAddress = await token.getAddress();
@@ -150,19 +319,19 @@ describe("WadoozieToken", () => {
         ],
       };
       const value = {
-        owner: initialHolder.address,
+        owner: lpWallet.address,
         spender: voter1.address,
         value: amount,
         nonce,
         deadline,
       };
 
-      const sig = await initialHolder.signTypedData(domain, types, value);
+      const sig = await lpWallet.signTypedData(domain, types, value);
       const { v, r, s } = ethers.Signature.from(sig);
 
       await expect(
         token.permit(
-          initialHolder.address,
+          lpWallet.address,
           voter1.address,
           amount,
           deadline,
@@ -174,10 +343,10 @@ describe("WadoozieToken", () => {
     });
 
     it("should reject invalid signer", async () => {
-      const { token, initialHolder, voter1, voter2 } =
+      const { token, lpWallet, voter1, voter2 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("500");
-      const nonce = await token.nonces(initialHolder.address);
+      const nonce = await token.nonces(lpWallet.address);
       const deadline = BigInt(await networkHelpers.time.latest()) + 3600n;
 
       const tokenAddress = await token.getAddress();
@@ -197,20 +366,20 @@ describe("WadoozieToken", () => {
         ],
       };
       const value = {
-        owner: initialHolder.address,
+        owner: lpWallet.address,
         spender: voter1.address,
         value: amount,
         nonce,
         deadline,
       };
 
-      // voter2 signs instead of initialHolder
+      // voter2 signs instead of lpWallet
       const sig = await voter2.signTypedData(domain, types, value);
       const { v, r, s } = ethers.Signature.from(sig);
 
       await expect(
         token.permit(
-          initialHolder.address,
+          lpWallet.address,
           voter1.address,
           amount,
           deadline,
@@ -224,76 +393,112 @@ describe("WadoozieToken", () => {
 
   // ── Votes (delegation + checkpointing) ──────────────────────────────
   describe("Votes", () => {
-    it("should have zero voting power before delegation", async () => {
-      const { token, initialHolder } =
+    it("genesis allocation wallets are auto-self-delegated with their allocation", async () => {
+      const { token, lpWallet, treasury, publisher, fragment, teamVesting } =
         await networkHelpers.loadFixture(deployDAOFixture);
-      expect(await token.getVotes(initialHolder.address)).to.equal(0n);
-    });
 
-    it("should grant voting power after self-delegation", async () => {
-      const { token, initialHolder } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-      await token.connect(initialHolder).delegate(initialHolder.address);
-      expect(await token.getVotes(initialHolder.address)).to.equal(
-        TEST_PARAMS.TOTAL_SUPPLY,
+      expect(await token.delegates(lpWallet.address)).to.equal(
+        lpWallet.address,
+      );
+      expect(await token.getVotes(lpWallet.address)).to.equal(
+        TEST_PARAMS.LP_ALLOCATION,
+      );
+
+      expect(await token.delegates(treasury.address)).to.equal(
+        treasury.address,
+      );
+      expect(await token.getVotes(treasury.address)).to.equal(
+        TEST_PARAMS.TREASURY_ALLOCATION,
+      );
+
+      expect(await token.delegates(publisher.address)).to.equal(
+        publisher.address,
+      );
+      expect(await token.getVotes(publisher.address)).to.equal(
+        TEST_PARAMS.PUBLISHER_ALLOCATION,
+      );
+
+      expect(await token.delegates(fragment.address)).to.equal(
+        fragment.address,
+      );
+      expect(await token.getVotes(fragment.address)).to.equal(
+        TEST_PARAMS.FRAGMENT_ALLOCATION,
+      );
+
+      expect(await token.delegates(teamVesting.address)).to.equal(
+        teamVesting.address,
+      );
+      expect(await token.getVotes(teamVesting.address)).to.equal(
+        TEST_PARAMS.TEAM_ALLOCATION,
       );
     });
 
-    it("should delegate voting power to another account", async () => {
-      const { token, initialHolder, voter1 } =
-        await networkHelpers.loadFixture(deployDAOFixture);
-      await token.connect(initialHolder).delegate(voter1.address);
-      expect(await token.getVotes(voter1.address)).to.equal(
-        TEST_PARAMS.TOTAL_SUPPLY,
+    it("burn address is also auto-self-delegated (voting power dormant — no key)", async () => {
+      const { token } = await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.delegates(TEST_PARAMS.BURN_ADDRESS)).to.equal(
+        TEST_PARAMS.BURN_ADDRESS,
       );
-      expect(await token.getVotes(initialHolder.address)).to.equal(0n);
+      expect(await token.getVotes(TEST_PARAMS.BURN_ADDRESS)).to.equal(
+        TEST_PARAMS.BURN_AT_LAUNCH,
+      );
     });
 
-    it("should update voting power on transfer", async () => {
-      const { token, initialHolder, voter1 } =
+    it("fresh recipient has zero voting power before any delegation", async () => {
+      const { token, voter1 } =
+        await networkHelpers.loadFixture(deployDAOFixture);
+      expect(await token.getVotes(voter1.address)).to.equal(0n);
+    });
+
+    it("voting power moves on transfer between auto-delegated holders", async () => {
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("1000");
 
-      // Both delegate to themselves
-      await token.connect(initialHolder).delegate(initialHolder.address);
-      await token.connect(voter1).delegate(voter1.address);
-
-      await token.connect(initialHolder).transfer(voter1.address, amount);
+      await token.connect(lpWallet).transfer(voter1.address, amount);
 
       expect(await token.getVotes(voter1.address)).to.equal(amount);
-      expect(await token.getVotes(initialHolder.address)).to.equal(
-        TEST_PARAMS.TOTAL_SUPPLY - amount,
+      expect(await token.getVotes(lpWallet.address)).to.equal(
+        TEST_PARAMS.LP_ALLOCATION - amount,
       );
     });
 
-    it("should checkpoint past votes", async () => {
-      const { token, initialHolder } =
+    it("explicit delegation overrides auto-self-delegation flow", async () => {
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
-      await token.connect(initialHolder).delegate(initialHolder.address);
+      await token.connect(lpWallet).delegate(voter1.address);
+      expect(await token.getVotes(voter1.address)).to.equal(
+        TEST_PARAMS.LP_ALLOCATION,
+      );
+      expect(await token.getVotes(lpWallet.address)).to.equal(0n);
+    });
+
+    it("should checkpoint past votes", async () => {
+      const { token, lpWallet } =
+        await networkHelpers.loadFixture(deployDAOFixture);
 
       const blockBefore = await ethers.provider.getBlockNumber();
       await networkHelpers.mine(1);
 
       expect(
-        await token.getPastVotes(initialHolder.address, blockBefore),
-      ).to.equal(TEST_PARAMS.TOTAL_SUPPLY);
+        await token.getPastVotes(lpWallet.address, blockBefore),
+      ).to.equal(TEST_PARAMS.LP_ALLOCATION);
     });
   });
 
   // ── Auto-Delegation (WAD-04) ─────────────────────────────────────────
   describe("Auto-Delegation (WAD-04)", () => {
-    it("initial holder is not auto-delegated on mint", async () => {
-      const { token, initialHolder } =
+    it("fresh recipient has no delegate before first transfer", async () => {
+      const { token, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
 
-      expect(await token.delegates(initialHolder.address)).to.equal(
+      expect(await token.delegates(voter1.address)).to.equal(
         ethers.ZeroAddress,
       );
-      expect(await token.getVotes(initialHolder.address)).to.equal(0n);
+      expect(await token.getVotes(voter1.address)).to.equal(0n);
     });
 
     it("recipient is auto-self-delegated on first transfer", async () => {
-      const { token, initialHolder, voter1 } =
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("1000");
 
@@ -302,7 +507,7 @@ describe("WadoozieToken", () => {
       );
 
       await expect(
-        token.connect(initialHolder).transfer(voter1.address, amount),
+        token.connect(lpWallet).transfer(voter1.address, amount),
       )
         .to.emit(token, "DelegateChanged")
         .withArgs(voter1.address, ethers.ZeroAddress, voter1.address);
@@ -312,7 +517,7 @@ describe("WadoozieToken", () => {
     });
 
     it("does not override an existing delegation", async () => {
-      const { token, initialHolder, voter1, voter2 } =
+      const { token, lpWallet, voter1, voter2 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("1000");
 
@@ -320,7 +525,7 @@ describe("WadoozieToken", () => {
       await token.connect(voter1).delegate(voter2.address);
       expect(await token.delegates(voter1.address)).to.equal(voter2.address);
 
-      await token.connect(initialHolder).transfer(voter1.address, amount);
+      await token.connect(lpWallet).transfer(voter1.address, amount);
 
       expect(await token.delegates(voter1.address)).to.equal(voter2.address);
       expect(await token.getVotes(voter2.address)).to.equal(amount);
@@ -328,16 +533,16 @@ describe("WadoozieToken", () => {
     });
 
     it("second transfer to same recipient does not re-delegate", async () => {
-      const { token, initialHolder, voter1 } =
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("500");
 
       await expect(
-        token.connect(initialHolder).transfer(voter1.address, amount),
+        token.connect(lpWallet).transfer(voter1.address, amount),
       ).to.emit(token, "DelegateChanged");
 
       await expect(
-        token.connect(initialHolder).transfer(voter1.address, amount),
+        token.connect(lpWallet).transfer(voter1.address, amount),
       ).to.not.emit(token, "DelegateChanged");
 
       expect(await token.delegates(voter1.address)).to.equal(voter1.address);
@@ -345,12 +550,12 @@ describe("WadoozieToken", () => {
     });
 
     it("self-transfer does not fail when already delegated", async () => {
-      const { token, initialHolder, voter1 } =
+      const { token, lpWallet, voter1 } =
         await networkHelpers.loadFixture(deployDAOFixture);
       const amount = ethers.parseEther("100");
 
       // First transfer triggers auto-delegation.
-      await token.connect(initialHolder).transfer(voter1.address, amount);
+      await token.connect(lpWallet).transfer(voter1.address, amount);
       expect(await token.delegates(voter1.address)).to.equal(voter1.address);
 
       // Self-transfer should not revert and should leave delegation intact.

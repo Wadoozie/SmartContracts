@@ -48,12 +48,36 @@ async function main() {
     )} ETH\n`,
   );
 
-  const initialHolder = process.env.INITIAL_HOLDER || deployer.address;
+  const wallets = {
+    LP_WALLET: process.env.LP_WALLET,
+    TREASURY: process.env.TREASURY,
+    PUBLISHER_REWARDS: process.env.PUBLISHER_REWARDS,
+    SIGNAL_FRAGMENTS: process.env.SIGNAL_FRAGMENTS,
+    TEAM_VESTING: process.env.TEAM_VESTING,
+  };
+  for (const [k, v] of Object.entries(wallets)) {
+    if (!v || !ethers.isAddress(v)) {
+      throw new Error(`Missing or invalid ${k} in .env`);
+    }
+  }
 
   console.log("[1/3] Compiling + deploying Wadoozie (flat)...");
+  console.log(`        deployer            ${deployer.address}`);
+  console.log(`        LP_WALLET           ${wallets.LP_WALLET}`);
+  console.log(`        TREASURY            ${wallets.TREASURY}`);
+  console.log(`        PUBLISHER_REWARDS   ${wallets.PUBLISHER_REWARDS}`);
+  console.log(`        SIGNAL_FRAGMENTS    ${wallets.SIGNAL_FRAGMENTS}`);
+  console.log(`        TEAM_VESTING        ${wallets.TEAM_VESTING}`);
   const w = compileFlat("Wadoozie");
   const Wadoozie = new ethers.ContractFactory(w.abi, w.bytecode, deployer);
-  const token = await Wadoozie.deploy(initialHolder);
+  const token = await Wadoozie.deploy(
+    deployer.address,
+    wallets.LP_WALLET,
+    wallets.TREASURY,
+    wallets.PUBLISHER_REWARDS,
+    wallets.SIGNAL_FRAGMENTS,
+    wallets.TEAM_VESTING,
+  );
   await token.waitForDeployment();
   const tokenAddr = await token.getAddress();
   console.log(`        → ${tokenAddr}`);
@@ -103,7 +127,7 @@ async function main() {
   const record = {
     network: networkName,
     deployer: deployer.address,
-    initialHolder,
+    wallets,
     contracts: {
       Wadoozie: tokenAddr,
       WadoozieTreasury: treasuryAddr,

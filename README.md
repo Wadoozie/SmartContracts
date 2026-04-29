@@ -39,7 +39,8 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 |---|---|
 | **Name** | Wadoozie |
 | **Symbol** | WADZ |
-| **Total Supply** | 1,000,000,000 |
+| **Total Supply** | 2,000,000,000 (`totalSupply()` is fixed at this value forever) |
+| **Effective Supply** | 1,000,000,001 (after the genesis dead-address burn) |
 | **Decimals** | 18 |
 | **Standard** | ERC-20 |
 
@@ -50,13 +51,32 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 | ERC20Votes | On-chain voting power tracking with checkpoints and delegation |
 | ERC20Permit (EIP-2612) | Gasless token approvals via off-chain signatures |
 
+### Genesis Distribution
+
+The constructor takes six wallet addresses and distributes the supply atomically — there are no admin functions, so this is the only allocation event the contract will ever see.
+
+| Allocation | Amount | % of effective | Recipient |
+|---|---|---|---|
+| **Dead-address burn** | 999,999,999 | — | `0x000…dEaD` (`BURN_ADDRESS`) |
+| **Liquidity Pool** | 750,000,001 | 75% (+ 1 token ceremony residue) | `LP_WALLET` |
+| **Treasury** | 100,000,000 | 10% | `TREASURY` (multisig) |
+| **Publisher Rewards** | 70,000,000 | 7% | `PUBLISHER_REWARDS` (multisig) |
+| **Signal Fragments** | 50,000,000 | 5% | `SIGNAL_FRAGMENTS` (multisig) |
+| **Team Vesting** | 30,000,000 | 3% | `TEAM_VESTING` (timelock) |
+
+`totalSupply()` permanently equals **2,000,000,000**: the burn is implemented as a transfer to `0x…dEaD`, not an OpenZeppelin `_burn`, so supply does not decrease. The 999,999,999 burned tokens sit in `0x…dEaD` forever (no key controls that address). All five allocation addresses are exposed as immutable public getters (`LP_WALLET`, `TREASURY`, `PUBLISHER_REWARDS`, `SIGNAL_FRAGMENTS`, `TEAM_VESTING`).
+
+After the constructor finishes, the deployer holds **zero** tokens and has no role. There is nothing to renounce.
+
 **Immutability guarantees:**
 - No `mint` function — supply is fixed at deployment
-- No `burn` function — tokens cannot be destroyed
+- No `burn` function — tokens cannot be destroyed post-genesis
 - No `pause` function — transfers cannot be halted
 - No `owner` / `Ownable` — no admin key exists
 
-The entire supply is minted to `initialHolder` in the constructor. To avoid governance stalling on un-delegated supply (WAD-04), Wadoozie auto self-delegates recipients the first time they receive tokens via a transfer — voting power activates on arrival without requiring a separate `delegate()` call. The initial mint is intentionally skipped, so `initialHolder` (treasury / distributor) must still call `delegate()` explicitly before it can vote or propose. Any delegation a holder has already set — to self or someone else — is never overridden.
+### Auto-Delegation (WAD-04)
+
+To avoid governance stalling on un-delegated supply, Wadoozie auto self-delegates recipients the first time they receive tokens via a transfer — voting power activates on arrival without requiring a separate `delegate()` call. Because the genesis distribution flows through `_transfer`, **all five allocation wallets are auto-self-delegated at deployment**, with voting power equal to their allocation. The `0x…dEaD` burn address is also self-delegated; its 999,999,999 voting power is permanently inert because no key controls the address. Any delegation a holder has already set — to self or someone else — is never overridden by a later transfer.
 
 ---
 
@@ -189,11 +209,11 @@ Artifacts are written to `artifacts/` (gitignored).
 npm test
 ```
 
-**60 tests** across three suites:
+**79 tests** across three suites:
 
 | Suite | File | Coverage |
 |---|---|---|
-| **WadoozieToken** | `test/Wadoozie.test.ts` | Deployment, transfers, permit, votes, immutability |
+| **WadoozieToken** | `test/Wadoozie.test.ts` | Deployment, genesis distribution, constructor reverts, transfers, permit, votes, auto-delegation, immutability |
 | **Headquarters** | `test/Headquarters.test.ts` | Configuration, proposal creation, voting, proposal guardian, proposal states |
 | **GovernanceLifecycle** | `test/GovernanceLifecycle.test.ts` | Full propose-vote-queue-execute flow, timelock enforcement, cancellation, access control, ETH handling, self-modification |
 
@@ -262,16 +282,23 @@ npm run deploy:sepolia:test
 
 Before deploying to Ethereum mainnet:
 
-1. **Run all tests** and confirm 60/60 pass:
+1. **Run all tests** and confirm 79/79 pass:
    ```bash
    npm test
    ```
 
 2. **Configure `.env`** with mainnet RPC URL, deployer private key, and Etherscan API key.
 
-3. **Set `initialHolder`** to the address that should receive the full 1B WADZ supply (use a multisig).
+3. **Set the six wallet addresses** for the genesis distribution. Each must be the *final* holder of its allocation — there is no admin to change them later. Use multisigs for everything except the LP wallet (which will pair with ETH on Uniswap immediately post-deploy).
 
-4. **Set `guardian`** to a multisig address (never a single EOA).
+   | Constructor parameter | Allocation | Recommended type |
+   |---|---|---|
+   | `deployer_` | 0 (drains during constructor) | The signer running the deploy tx |
+   | `lpWallet_` | 750,000,001 WADZ | EOA or multisig that will pair LP on Uniswap |
+   | `treasury_` | 100,000,000 WADZ | DAO treasury multisig |
+   | `publisherRewards_` | 70,000,000 WADZ | Publisher payouts multisig |
+   | `signalFragments_` | 50,000,000 WADZ | Signal Fragments prize-pool multisig |
+   | `teamVesting_` | 30,000,000 WADZ | Team vesting timelock contract |
 
 5. **Deploy:**
    ```bash
@@ -285,7 +312,7 @@ Before deploying to Ethereum mainnet:
    - Timelock `hasRole(CANCELLER_ROLE, governorAddress)` returns `true`
    - Timelock `hasRole(DEFAULT_ADMIN_ROLE, deployerAddress)` returns `false`
 
-8. **Delegate tokens** — the `initialHolder` must call `delegate(ownAddress)` to activate voting power before any proposals can pass quorum. Downstream recipients do not need to do this manually — the token auto self-delegates them on their first incoming transfer (see "Auto-delegation" in the Token Specification section).
+8. **Delegation** — all five genesis allocation wallets are auto-self-delegated by the constructor (their voting power is live the moment the deploy tx confirms). No manual `delegate()` calls are required to activate quorum. Downstream recipients (anyone who later receives WADZ via transfer) are also auto-self-delegated on first receipt; see the *Auto-Delegation (WAD-04)* section for details.
 
 ---
 
@@ -295,7 +322,13 @@ After deployment, verify source code on Etherscan:
 
 ```bash
 # Token
-npx hardhat verify --network mainnet <TOKEN_ADDRESS> "<INITIAL_HOLDER_ADDRESS>"
+npx hardhat verify --network mainnet <TOKEN_ADDRESS> \
+  "<DEPLOYER_ADDRESS>" \
+  "<LP_WALLET_ADDRESS>" \
+  "<TREASURY_ADDRESS>" \
+  "<PUBLISHER_REWARDS_ADDRESS>" \
+  "<SIGNAL_FRAGMENTS_ADDRESS>" \
+  "<TEAM_VESTING_ADDRESS>"
 
 # Timelock
 npx hardhat verify --network mainnet <TIMELOCK_ADDRESS> \

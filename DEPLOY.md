@@ -26,12 +26,20 @@ ETHEREUM_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/<key>
 DEPLOYER_PRIVATE_KEY=0x<your_deployer_key>
 ETHERSCAN_API_KEY=<your_etherscan_v2_api_key>
 
-# Optional: receives the entire 1B WADZ supply at deploy.
-# Defaults to the deployer if omitted.
-INITIAL_HOLDER=0x<treasury_or_distributor_address>
+# Required: six wallet addresses for the genesis distribution.
+# All five allocation wallets must be set — there is no admin to fix
+# them later. Use multisigs for everything except LP_WALLET (which will
+# immediately pair with ETH on Uniswap post-deploy).
+LP_WALLET=0x<lp_wallet_address>                 # 750,000,001 WADZ
+TREASURY=0x<treasury_multisig>                  # 100,000,000 WADZ
+PUBLISHER_REWARDS=0x<publisher_rewards_multisig> #  70,000,000 WADZ
+SIGNAL_FRAGMENTS=0x<signal_fragments_multisig>  #  50,000,000 WADZ
+TEAM_VESTING=0x<team_vesting_timelock>          #  30,000,000 WADZ
 ```
 
-> **Important** — `INITIAL_HOLDER` should be the address that holds the entire supply at genesis (treasury multisig, distributor contract, etc.). Tokens cannot be re-minted, so set this carefully.
+> **Important** — These addresses are baked into immutable storage by the constructor and **cannot be changed afterward**. Double-check every value before deploying. The deployer signer briefly holds 2,000,000,000 WADZ during the constructor and drains to zero before the tx ends; you do not need a separate "initial holder" address.
+
+> **Burn semantics** — 999,999,999 WADZ is transferred to `0x000…dEaD` inside the constructor. `totalSupply()` permanently equals 2,000,000,000; the burn does not decrease it. The single ceremony token (the `+1`) is added to `LP_WALLET`'s allocation, so `LP_WALLET` receives 750,000,001 WADZ.
 
 ---
 
@@ -42,14 +50,14 @@ Run all of these on a fresh clone before mainnet:
 ```bash
 npm install
 npm run compile        # solc 0.8.28, optimizer 200 runs, evm cancun
-npm run test           # full 63-test governance suite must pass
+npm run test           # full 79-test governance suite must pass
 npm run flatten        # regenerate contracts-flat/{Wadoozie,WadoozieTreasury,Headquarters}.sol
 ```
 
 You should see:
 
 ```
-63 passing
+79 passing
 contracts-flat/Wadoozie.sol         (~224 KB)
 contracts-flat/WadoozieTreasury.sol (~ 48 KB)
 contracts-flat/Headquarters.sol     (~323 KB)
@@ -84,13 +92,15 @@ If any of these need adjustment, edit the constants at the top of `scripts/deplo
 
 ## 4. Deploy
 
+> ⚠️ **Action required before mainnet:** `scripts/deploy-flat.mjs` currently calls the old single-argument `Wadoozie.deploy(initialHolder)`. The new constructor takes six arguments. Update the script to read `LP_WALLET` / `TREASURY` / `PUBLISHER_REWARDS` / `SIGNAL_FRAGMENTS` / `TEAM_VESTING` from `process.env` and pass them to `Wadoozie.deploy(deployer.address, ...)` before running on mainnet. Also regenerate `contracts-flat/Wadoozie.sol` with `npm run flatten` so the flat source matches the new contract.
+
 ```bash
 npm run deploy:flat:mainnet
 ```
 
 What it does (in order):
 
-1. Compiles `contracts-flat/Wadoozie.sol` with solc 0.8.28 and deploys it. Entire 1B supply is minted to `INITIAL_HOLDER`.
+1. Compiles `contracts-flat/Wadoozie.sol` with solc 0.8.28 and deploys it with the six wallet addresses (`deployer`, `LP_WALLET`, `TREASURY`, `PUBLISHER_REWARDS`, `SIGNAL_FRAGMENTS`, `TEAM_VESTING`). The constructor mints 2B WADZ to the deployer, transfers 999,999,999 to `0x000…dEaD`, then distributes the remaining 1,000,000,001 across the five allocation wallets — atomically, in one transaction. Deployer drains to zero before the tx returns.
 2. Compiles `contracts-flat/WadoozieTreasury.sol` and deploys it with:
    - `minDelay = 86400`
    - `proposers = []`
@@ -121,16 +131,27 @@ Saved → deployments-flat/mainnet.json
 
 Before announcing addresses publicly, confirm on Etherscan that each contract:
 
-- Token: `totalSupply()` returns 1 000 000 000 × 10^18 and `balanceOf(INITIAL_HOLDER)` matches.
+- Token:
+  - `totalSupply()` returns 2 000 000 000 × 10^18 (the burn does not decrease total supply)
+  - `balanceOf(0x000…dEaD)` returns 999 999 999 × 10^18
+  - `balanceOf(LP_WALLET)` returns 750 000 001 × 10^18
+  - `balanceOf(TREASURY)` returns 100 000 000 × 10^18
+  - `balanceOf(PUBLISHER_REWARDS)` returns 70 000 000 × 10^18
+  - `balanceOf(SIGNAL_FRAGMENTS)` returns 50 000 000 × 10^18
+  - `balanceOf(TEAM_VESTING)` returns 30 000 000 × 10^18
+  - `balanceOf(<deployer>)` returns 0
+  - The five immutable getters (`LP_WALLET`, `TREASURY`, `PUBLISHER_REWARDS`, `SIGNAL_FRAGMENTS`, `TEAM_VESTING`) return the addresses you intended
 - Treasury: deployer **no longer** has `DEFAULT_ADMIN_ROLE`. Governor has `PROPOSER_ROLE` + `CANCELLER_ROLE`.
 - Headquarters: `quorumNumerator()` returns 350, `quorumDenominator()` returns 10000, `votingDelay()` returns 7200, `votingPeriod()` returns 50400.
 
 Quick CLI check via `cast` (if installed):
 
 ```bash
-cast call <Wadoozie>     "totalSupply()(uint256)" --rpc-url $ETHEREUM_RPC_URL
-cast call <Headquarters> "quorumNumerator()(uint256)" --rpc-url $ETHEREUM_RPC_URL
-cast call <Headquarters> "quorumDenominator()(uint256)" --rpc-url $ETHEREUM_RPC_URL
+cast call <Wadoozie>     "totalSupply()(uint256)"                           --rpc-url $ETHEREUM_RPC_URL
+cast call <Wadoozie>     "balanceOf(address)(uint256)" 0x000000000000000000000000000000000000dEaD --rpc-url $ETHEREUM_RPC_URL
+cast call <Wadoozie>     "LP_WALLET()(address)"                             --rpc-url $ETHEREUM_RPC_URL
+cast call <Headquarters> "quorumNumerator()(uint256)"                       --rpc-url $ETHEREUM_RPC_URL
+cast call <Headquarters> "quorumDenominator()(uint256)"                     --rpc-url $ETHEREUM_RPC_URL
 ```
 
 ---
@@ -183,7 +204,10 @@ If the automated script can't reach Etherscan or you prefer the UI:
      const { AbiCoder } = require('ethers');
      const enc = AbiCoder.defaultAbiCoder();
      // Wadoozie:
-     console.log('Wadoozie:', enc.encode(['address'], ['<INITIAL_HOLDER>']).slice(2));
+     console.log('Wadoozie:', enc.encode(
+       ['address','address','address','address','address','address'],
+       ['<DEPLOYER>','<LP_WALLET>','<TREASURY>','<PUBLISHER_REWARDS>','<SIGNAL_FRAGMENTS>','<TEAM_VESTING>']
+     ).slice(2));
      // WadoozieTreasury:
      console.log('Treasury:', enc.encode(
        ['uint256','address[]','address[]','address'],
@@ -206,8 +230,9 @@ If the automated script can't reach Etherscan or you prefer the UI:
 - [ ] All three contracts show **green checkmark** on Etherscan
 - [ ] `deployments-flat/mainnet.json` committed to a private repo or backed up offline
 - [ ] Deployer hot wallet (if used) drained and rotated
-- [ ] Deployer EOA confirmed to have **no remaining roles** on the treasury
-- [ ] `INITIAL_HOLDER` matches the intended treasury / distributor
+- [ ] Deployer EOA confirmed to have **no remaining roles** on the treasury and **zero WADZ balance**
+- [ ] All six immutable getters (`LP_WALLET`, `TREASURY`, `PUBLISHER_REWARDS`, `SIGNAL_FRAGMENTS`, `TEAM_VESTING`, `BURN_ADDRESS`) on the token return the intended addresses
+- [ ] Per-wallet balances confirmed on Etherscan (see *Sanity-check* above)
 - [ ] Token contract address announced only **after** verification passes
 - [ ] Frontend (`dao-frontend-demo/lib/contracts.ts` if used) updated with mainnet addresses
 

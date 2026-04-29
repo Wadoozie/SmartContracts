@@ -121,7 +121,17 @@ async function main() {
 
   const ZERO = "0x0000000000000000000000000000000000000000";
 
-  const wadoozieArgs = abiEncode(["address"], [record.initialHolder]);
+  const wadoozieArgs = abiEncode(
+    ["address", "address", "address", "address", "address", "address"],
+    [
+      record.deployer,
+      record.wallets.LP_WALLET,
+      record.wallets.TREASURY,
+      record.wallets.PUBLISHER_REWARDS,
+      record.wallets.SIGNAL_FRAGMENTS,
+      record.wallets.TEAM_VESTING,
+    ],
+  );
   const treasuryArgs = abiEncode(
     ["uint256", "address[]", "address[]", "address"],
     [record.params.timelockDelay, [], [ZERO], record.deployer],

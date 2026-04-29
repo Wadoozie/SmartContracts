@@ -107,7 +107,7 @@ add_table(
 doc.add_heading("2. Wadoozie Token (WADZ)", level=1)
 
 doc.add_paragraph(
-    "Wadoozie is a standard ERC-20 token with a fixed supply of 1 billion "
+    "Wadoozie is a standard ERC-20 token with a fixed supply of 2 billion "
     "tokens. It cannot be minted, burned, or paused after deployment — the "
     "supply is permanently locked. It supports ERC-20 Permit (gasless "
     "approvals) and ERC-20 Votes (on-chain voting power tracking)."
@@ -118,7 +118,7 @@ doc.add_heading("Constructor Parameters", level=2)
 add_table(
     ["Parameter", "Type", "Description"],
     [
-        ["initialHolder", "address", "Wallet that receives the entire 1 billion token supply at deployment."],
+        ["initialHolder", "address", "Wallet that receives the entire 2 billion token supply at deployment."],
     ],
 )
 
@@ -130,7 +130,7 @@ add_table(
         ["name()", "string", "Returns the token name (\"Wadoozie\" on testnet, \"Wadoozie\" on mainnet)."],
         ["symbol()", "string", "Returns the token symbol (\"WADZ\" on testnet, \"WADZ\" on mainnet)."],
         ["decimals()", "uint8", "Returns 18 (standard ERC-20 precision)."],
-        ["totalSupply()", "uint256", "Returns the total token supply (1,000,000,000 * 10^18)."],
+        ["totalSupply()", "uint256", "Returns the total token supply (2,000,000,000 * 10^18)."],
         ["TOTAL_SUPPLY()", "uint256", "Same as totalSupply — a public constant for convenience."],
         ["balanceOf(account)", "uint256", "Returns how many tokens the given address holds."],
         ["allowance(owner, spender)", "uint256", "Returns how many tokens a spender is approved to transfer on behalf of owner."],
@@ -385,7 +385,7 @@ steps = [
     (
         "Deploy the Wadoozie Token",
         "Deploy the Wadoozie contract with the initialHolder address. "
-        "The entire 1 billion supply goes to this address."
+        "The entire 2 billion supply goes to this address."
     ),
     (
         "Deploy the WadoozieTreasury",
