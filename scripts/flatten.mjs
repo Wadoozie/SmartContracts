@@ -5,6 +5,7 @@ const CONTRACTS = [
   { name: "Wadoozie", path: "contracts/Wadoozie.sol" },
   { name: "WadoozieTreasury", path: "contracts/WadoozieTreasury.sol" },
   { name: "Headquarters", path: "contracts/Headquarters.sol" },
+  { name: "WadoozieDisperser", path: "contracts/WadoozieDisperser.sol" },
 ];
 
 const OUT_DIR = "contracts-flat";
