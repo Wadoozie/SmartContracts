@@ -1,0 +1,21 @@
+{
+  "network": "mainnet",
+  "chainId": 1,
+  "address": "0x383a0d9e42eee6f2b29c02e1ad940033715bedf8",
+  "txHash": "0xb427a53553c798986b08988d663a3ef97e4019f95815f895c2ff15558a856494",
+  "blockNumber": 25213698,
+  "deployer": "0x65Dc3Bf9293C47d7379cb416cF07506Fd359af9E",
+  "deployedAt": "2026-05-31T06:53:00Z",
+  "gasUsed": 1426474,
+  "effectiveGasPriceWei": 157938453,
+  "actualCostWei": "225295096804722",
+  "constructorArgs": {
+    "wadz": "0x8a730da6d4f483917a53072d9a8e5eef4b105d72",
+    "weth": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "router": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+    "owner": "0xD01E81D52E6aCa955b8A1fEe72069D310B5a787A",
+    "feeRecipient": "0xD01E81D52E6aCa955b8A1fEe72069D310B5a787A",
+    "feeBps": 75
+  },
+  "etherscanUrl": "https://etherscan.io/address/0x383a0d9e42eee6f2b29c02e1ad940033715bedf8"
+}

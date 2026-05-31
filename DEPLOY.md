@@ -243,3 +243,91 @@ If the automated script can't reach Etherscan or you prefer the UI:
 There is **no upgrade path**. The contracts are immutable, the timelock cannot be migrated (`updateTimelock` reverts), and there is no admin role left on the treasury.
 
 If a bug is discovered post-deploy, the only mitigation is **deploy v2 and migrate via governance** — token holders vote to send funds out of the existing treasury into a new system. Plan accordingly.
+
+---
+
+## 10. WadoozieFeeRouter deployment (separate flow)
+
+The fee router is independent of the governance contracts above. It can be deployed and redeployed safely at any time without touching the token or DAO — frontend just repoints `swapRouter` to the new address. It uses Hardhat Ignition (not the flat-source `deploy-flat.mjs` path), because the constructor wires it to external addresses (WADZ, WETH, Uniswap V2 router, treasury multisig) instead of bootstrapping a new system.
+
+### 10.1 Prerequisites
+
+- Same `.env` setup as section 1, plus a confirmed `feeRecipient` address. **This must be a multisig** (the DAO treasury) before mainnet — single-EOA ownership of fee revenue is a rugpull vector and an audit blocker.
+- Mainnet WADZ + WETH + Uniswap V2 Router addresses verified on Etherscan.
+
+> **`feeRecipient` is permanent.** It is stored in an `immutable` slot — there is no setter. Triple-check the address before deploying. If you ever need to change it, the only path is to deploy a new `WadoozieFeeRouter` and have the frontend repoint to it.
+
+### 10.2 Configure the parameter file
+
+Copy the example and fill in real addresses:
+
+```bash
+cp ignition/params/fee-router.mainnet.example.json ignition/params/fee-router.mainnet.json
+# edit fee-router.mainnet.json — replace 0xREPLACE_WITH_TREASURY_MULTISIG with the real multisig
+```
+
+The five fields are:
+
+| Field | Mainnet value |
+|---|---|
+| `wadz` | `0x8A730Da6D4f483917A53072d9A8e5eEF4b105d72` |
+| `weth` | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` |
+| `router` | `0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D` (Uniswap V2 Router 02) |
+| `feeRecipient` | DAO treasury multisig (`WadoozieTreasury` address, or a Safe owned by it) |
+| `initialFeeBps` | `50` (0.5%) |
+
+### 10.3 Deploy
+
+```bash
+# Sepolia first — always
+npx hardhat ignition deploy ignition/modules/WadoozieFeeRouter.ts \
+  --network sepolia \
+  --parameters ignition/params/fee-router.sepolia.json
+
+# Then mainnet
+npx hardhat ignition deploy ignition/modules/WadoozieFeeRouter.ts \
+  --network mainnet \
+  --parameters ignition/params/fee-router.mainnet.json
+```
+
+Ignition writes the deployment record to `ignition/deployments/<chainId>/`. Commit that record (excluding any secrets) so the frontend team can pull the new router address.
+
+### 10.4 Post-deploy
+
+1. **Verify on Etherscan**:
+   ```bash
+   npx hardhat verify --network mainnet <deployed_address> \
+     "0x8A730Da6D4f483917A53072d9A8e5eEF4b105d72" \
+     "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" \
+     "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" \
+     "<feeRecipient>" \
+     50
+   ```
+
+2. **Transfer ownership to the multisig** (the deployer EOA is the default owner):
+   ```solidity
+   feeRouter.transferOwnership(<multisig_address>);
+   // Ownable v5 uses a one-step transfer; the contract is now owned by
+   // the multisig.
+   ```
+
+   Note: ownership controls `setFeeBps`, `setRouter`, `pause`, `unpause`, and the rescue functions. It does **not** control `feeRecipient` — that is `immutable` and was fixed permanently in step 10.2.
+
+3. **Smoke-test on Etherscan Write Contract**:
+   - Connect the multisig (or any wallet with ≥ 0.01 ETH).
+   - Call `buyWadzWithETH(0, <future_timestamp>)` with `0.001` ETH as value.
+   - Confirm the tx emits `BuyExecuted` with the expected fee math, that 0.000005 ETH lands in `feeRecipient`, and that ~0.000995 ETH worth of WADZ lands in the caller.
+   - Call `sellWadzForETH(<small_amount>, 0, <future_timestamp>)` after `approve` — same shape, expect `SellExecuted`.
+
+4. **Frontend handoff** — give the team the router address. They update `NEXT_PUBLIC_FEE_ROUTER_ADDRESS` (or equivalent) in Vercel and switch the buy-wadz UI from calling Uniswap V2 directly to calling our router. The existing approve / signing UX is unchanged for the user.
+
+### 10.5 Operational runbook
+
+| Scenario | Action |
+|---|---|
+| Promo period — drop fee to 0.25% | Multisig calls `setFeeBps(25)` |
+| Move fee stream to a new treasury | **Not possible in-place** — `feeRecipient` is immutable. Deploy a new `WadoozieFeeRouter` with the new recipient and have the frontend repoint. The old router can be paused via `pause()` to force migration. |
+| Uniswap V2 router deprecated | Multisig calls `pause()`, then `setRouter(<new_router>)`, then `unpause()` |
+| Suspected exploit / DEX outage | Multisig calls `pause()` — every swap reverts until `unpause()` |
+| Tokens sent to router by mistake | Multisig calls `rescueTokens(<token>, <to>, <amount>)` |
+| Fee router is buggy / needs upgrade | Deploy a new instance, frontend repoints. The old one keeps working until disabled by `pause()` |

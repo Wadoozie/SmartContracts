@@ -30,6 +30,42 @@ Fully on-chain governance system for the Wadoozie ecosystem. Token holders vote 
 | **Wadoozie** | `contracts/Wadoozie.sol` | ERC-20 governance token with fixed supply, delegation, and gasless approvals |
 | **Headquarters** | `contracts/Headquarters.sol` | OpenZeppelin Governor — proposal creation, voting, queueing, execution |
 | **WadoozieTreasury** | `contracts/WadoozieTreasury.sol` | TimelockController wrapper — treasury, execution delay, role-based access |
+| **WadoozieFeeRouter** | `contracts/WadoozieFeeRouter.sol` | Uniswap V2 wrapper that skims 0.5% on every WADZ buy / sell and forwards it to the DAO treasury |
+
+### WadoozieFeeRouter
+
+Thin, non-upgradeable wrapper around the canonical Uniswap V2 Router. On every swap it takes `feeBps` (default `50` = 0.5%, hard-capped at `100` = 1%) from the **input** token, sends the fee to `feeRecipient` (the DAO treasury multisig in production), and routes the remainder through Uniswap with the user as the direct recipient. The router holds nothing between transactions.
+
+**Three swap shapes**, mirroring the buy-wadz UI's spend-token picker:
+
+| Function | Path | Fee taken in | Use case |
+|---|---|---|---|
+| `buyWadzWithETH(amountOutMin, deadline)` payable | `[WETH, WADZ]` | ETH (`msg.value`) | Native-ETH buys |
+| `buyWadzWithToken(token, amountIn, amountOutMin, deadline)` | `[token, WETH, WADZ]` | the input ERC-20 | USDC / USDT / any other ERC-20 spend |
+| `sellWadzForETH(amountIn, amountOutMin, deadline)` | `[WADZ, WETH]` | WADZ | Sell back to ETH |
+
+The non-ETH paths require an `approve(WadoozieFeeRouter, ≥ amountIn)` on the input token before the call (V2-standard UX, identical to what Uniswap's own interface requires).
+
+**Admin surface** (`Ownable`, owner = DAO multisig post-deploy):
+
+| Function | Purpose |
+|---|---|
+| `setFeeBps(uint16)` | Lower / raise the fee, capped at `MAX_FEE_BPS = 100` (1%) |
+| `setRouter(address)` | Swap in a different V2-compatible router if the canonical one is ever deprecated |
+| `pause()` / `unpause()` | Emergency stop — all swap functions revert while paused |
+| `rescueTokens(token, to, amount)` | Recover any ERC-20 accidentally sent to the contract |
+| `rescueEth(to, amount)` | Same, for native ETH |
+
+> **`feeRecipient` is deliberately not in this table.** It is set once in the constructor and stored in an `immutable` slot — there is no setter, and a compromised owner key cannot redirect the fee stream. If the recipient ever needs to change, deploy a new `WadoozieFeeRouter` and have the frontend repoint.
+
+**Safety invariants** (all enforced at the contract level, not by convention):
+
+- `WADZ`, `WETH`, and `feeRecipient` are `immutable` and pinned at deploy — no admin action can repurpose the contract for a different token or redirect the fee stream.
+- Fee is hard-capped at 100 bps. A malicious / compromised owner cannot raise it above 1%.
+- `ReentrancyGuard` on every swap function.
+- `whenNotPaused` on every swap function.
+- Fees forward atomically — the router never holds user funds between calls.
+- WADZ-as-input and WETH-as-input rejected on `buyWadzWithToken` to prevent path tricks.
 
 ---
 

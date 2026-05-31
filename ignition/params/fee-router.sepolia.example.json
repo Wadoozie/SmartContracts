@@ -1,0 +1,10 @@
+{
+  "WadoozieFeeRouterModule": {
+    "wadz": "0x357504Ed8B10D3cDD57b5291A3b9f3c3a02E90BD",
+    "weth": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+    "router": "0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008",
+    "owner": "0xD01E81D52E6aCa955b8A1fEe72069D310B5a787A",
+    "feeRecipient": "0xD01E81D52E6aCa955b8A1fEe72069D310B5a787A",
+    "initialFeeBps": 75
+  }
+}
